@@ -1,0 +1,249 @@
+<style>
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    margin: 0;
+    padding: 16px;
+    background-color: #f5f5f5;
+  }
+  h1 { font-size: 16px; margin: 0 0 16px 0; }
+  .tabs { display: flex; border-bottom: 1px solid #e5e5e5; margin-bottom: 16px; }
+  .tab { padding: 8px 12px; font-weight: 500; cursor: pointer; color: #888; }
+  .tab.active { color: #000; border-bottom: 2px solid #000; }
+  .container { background: white; padding: 16px; border-radius: 8px; min-height: 150px; display: flex; flex-direction: column; justify-content: center; align-items: center; color: #888; text-align: center; }
+  .text-list { width: 100%; max-height: 250px; overflow-y: auto; text-align: left; }
+  .frame-group { margin-bottom: 16px; }
+  .frame-title { font-weight: bold; font-size: 12px; margin-bottom: 8px; color: #333; }
+  .input-wrapper {
+    position: relative;
+    width: 100%;
+    margin-bottom: 8px;
+  }
+  input[type="text"] {
+    width: 100%;
+    padding: 8px;
+    padding-right: 28px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+  }
+  .reset-icon {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    opacity: 0.6;
+    transition: opacity 0.2s;
+    visibility: hidden;
+  }
+  .reset-icon:hover { opacity: 1; }
+  .reset-icon.visible { visibility: visible; }
+
+  .footer { position: fixed; bottom: 0; left: 0; right: 0; padding: 16px; display: flex; justify-content: flex-end; background-color: #f5f5f5; }
+  button { border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 500; }
+  button#cancel { background: #e5e5e5; color: #000; margin-right: 8px; }
+  button#apply { background: #0D99FF; color: white; }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  .hidden { display: none; }
+</style>
+
+<div class="tabs">
+  <div class="tab active" id="tab-textos">Textos</div>
+  <div class="tab" id="tab-frames">Frames</div>
+</div>
+
+<div id="empty-state" class="container">
+  <p>Nenhum texto selecionado</p>
+  <p style="font-size: 12px;">Selecione segurando Ctrl+Shift</p>
+</div>
+
+<div id="text-list-container" class="text-list hidden">
+  </div>
+
+<div class="footer">
+  <button id="cancel">Cancelar</button>
+  <button id="apply" disabled>Aplicar</button>
+</div>
+
+
+<script>
+  // Pega referência das abas
+  const tabTextos = document.getElementById('tab-textos');
+  const tabFrames = document.getElementById('tab-frames');
+  const emptyState = document.getElementById('empty-state');
+  const emptyStateParagraph = emptyState.querySelector('p'); // Pega o parágrafo da mensagem
+  const textListContainer = document.getElementById('text-list-container');
+  const applyButton = document.getElementById('apply');
+  const cancelButton = document.getElementById('cancel');
+
+  // Variável para controlar o modo atual
+  let currentMode = 'textos';
+
+  // --- LÓGICA DE TROCA DE ABAS ---
+  function setMode(mode) {
+    currentMode = mode;
+    // Atualiza o visual das abas
+    tabTextos.classList.toggle('active', mode === 'textos');
+    tabFrames.classList.toggle('active', mode === 'frames');
+
+    // Força a re-renderização com os últimos dados recebidos
+    // (O "true" é um truque para forçar a re-renderização)
+    window.onmessage({ data: { pluginMessage: { type: 'force-rerender' } } }, true);
+    applyButton.disabled = true; // Sempre desabilita o botão ao trocar de aba
+  }
+
+  tabTextos.onclick = () => setMode('textos');
+  tabFrames.onclick = () => setMode('frames');
+
+  // Guarda os últimos dados recebidos do figma
+  let lastReceivedData = null;
+
+  // --- FUNÇÕES DE RENDERIZAÇÃO SEPARADAS ---
+
+  function renderTextView(textData) {
+    const frameIds = Object.keys(textData);
+    if (frameIds.length === 0) {
+      emptyStateParagraph.textContent = 'Nenhum texto selecionado';
+      emptyState.classList.remove('hidden');
+      textListContainer.classList.add('hidden');
+    } else {
+      emptyState.classList.add('hidden');
+      textListContainer.classList.remove('hidden');
+      textListContainer.innerHTML = ''; // Limpa a lista
+      for (const frameId of frameIds) {
+        // ... (código para renderizar textos, exatamente como antes) ...
+        const frameData = textData[frameId];
+        const frameGroup = document.createElement('div');
+        frameGroup.className = 'frame-group';
+        const title = document.createElement('div');
+        title.className = 'frame-title';
+        title.textContent = frameData.frameName;
+        frameGroup.appendChild(title);
+        for (const textNode of frameData.textNodes) {
+          const wrapper = document.createElement('div');
+          wrapper.className = 'input-wrapper';
+          const input = document.createElement('input');
+          input.type = 'text';
+          input.value = textNode.characters;
+          input.dataset.nodeId = textNode.nodeId;
+          input.dataset.originalText = textNode.characters;
+          const resetIcon = document.createElement('span');
+          resetIcon.className = 'reset-icon';
+          resetIcon.innerHTML = `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 4.5a7.5 7.5 0 1 0 5.418 13.04M12 4.5V1.5m0 3L9 1.5m3 3l3-3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+          wrapper.appendChild(input);
+          wrapper.appendChild(resetIcon);
+          frameGroup.appendChild(wrapper);
+        }
+        textListContainer.appendChild(frameGroup);
+      }
+    }
+  }
+
+  function renderFrameView(frameData) {
+    if (frameData.length === 0) {
+      emptyStateParagraph.textContent = 'Nenhum frame selecionado';
+      emptyState.classList.remove('hidden');
+      textListContainer.classList.add('hidden');
+    } else {
+      emptyState.classList.add('hidden');
+      textListContainer.classList.remove('hidden');
+      textListContainer.innerHTML = ''; // Limpa a lista
+      // Cria um único grupo para os frames
+      const frameGroup = document.createElement('div');
+      frameGroup.className = 'frame-group';
+      for (const frameNode of frameData) {
+        // ... (código similar para renderizar inputs dos frames) ...
+        const wrapper = document.createElement('div');
+        wrapper.className = 'input-wrapper';
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.value = frameNode.name;
+        input.dataset.nodeId = frameNode.nodeId;
+        input.dataset.originalText = frameNode.name;
+        const resetIcon = document.createElement('span');
+        resetIcon.className = 'reset-icon';
+        resetIcon.innerHTML = `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 4.5a7.5 7.5 0 1 0 5.418 13.04M12 4.5V1.5m0 3L9 1.5m3 3l3-3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+        wrapper.appendChild(input);
+        wrapper.appendChild(resetIcon);
+        frameGroup.appendChild(wrapper);
+      }
+      textListContainer.appendChild(frameGroup);
+    }
+  }
+
+  // --- OUVINTE PRINCIPAL DE MENSAGENS ---
+  window.onmessage = (event, force = false) => {
+    const msg = event.data.pluginMessage;
+    // Se a mensagem não for de rerender, guardamos os dados
+    if (msg.type === 'selectionChange') {
+      lastReceivedData = msg;
+    }
+    
+    if (lastReceivedData) {
+      if (currentMode === 'textos') {
+        renderTextView(lastReceivedData.textData);
+      } else {
+        renderFrameView(lastReceivedData.frameData);
+      }
+    }
+  };
+  
+  textListContainer.addEventListener('input', (event) => {
+    if (event.target.tagName === 'INPUT') {
+      const input = event.target;
+      const resetIcon = input.nextElementSibling;
+
+      // Compara o valor atual com o original
+      if (input.value !== input.dataset.originalText) {
+        resetIcon.classList.add('visible'); // Icone de reset visível
+      } else {
+        resetIcon.classList.remove('visible'); // Icone de reset invisível
+      }
+      applyButton.disabled = false; // Habilita o botão de aplicar
+    }
+  });
+
+  textListContainer.addEventListener('click', (event) => {
+    const resetIcon = event.target.closest('.reset-icon');
+    if (resetIcon) {
+      const wrapper = resetIcon.parentElement;
+      const input = wrapper.querySelector('input');
+      
+      input.value = input.dataset.originalText;
+      resetIcon.classList.remove('visible');
+    }
+  });
+
+  cancelButton.onclick = () => {
+    parent.postMessage({ pluginMessage: { type: 'cancel' } }, '*');
+  }
+
+  applyButton.onclick = () => {
+    const inputs = textListContainer.querySelectorAll('input[type="text"]');
+    const changes = [];
+    
+    if (currentMode === 'textos') {
+      inputs.forEach(input => {
+        changes.push({ nodeId: input.dataset.nodeId, newText: input.value });
+      });
+      parent.postMessage({ pluginMessage: { type: 'apply-changes', data: changes } }, '*');
+    } else { // Modo Frames
+      inputs.forEach(input => {
+        changes.push({ nodeId: input.dataset.nodeId, newName: input.value });
+      });
+      parent.postMessage({ pluginMessage: { type: 'apply-frame-name-changes', data: changes } }, '*');
+    }
+
+    // Reseta o estado do botão e dos inputs
+    applyButton.disabled = true;
+    inputs.forEach(input => {
+      input.dataset.originalText = input.value;
+      const resetIcon = input.nextElementSibling;
+      if (resetIcon) {
+        resetIcon.classList.remove('visible');
+      }
+    });
+  }
+</script> 

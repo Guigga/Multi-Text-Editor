@@ -1,85 +1,238 @@
 <style>
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-    margin: 0;
-    padding: 16px;
-    background-color: #f5f5f5;
+  /* Importa a fonte Inter do Google Fonts */
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+
+  /* Reset e Configurações Globais */
+  * {
+    box-sizing: border-box;
   }
-  h1 { font-size: 16px; margin: 0 0 16px 0; }
-  .tabs { display: flex; border-bottom: 1px solid #e5e5e5; margin-bottom: 16px; }
-  .tab { padding: 8px 12px; font-weight: 500; cursor: pointer; color: #888; }
-  .tab.active { color: #000; border-bottom: 2px solid #000; }
-  .container { background: white; padding: 16px; border-radius: 8px; min-height: 150px; display: flex; flex-direction: column; justify-content: center; align-items: center; color: #888; text-align: center; }
-  .text-list { width: 100%; max-height: 250px; overflow-y: auto; text-align: left; }
-  .frame-group { margin-bottom: 16px; }
-  .frame-title { font-weight: bold; font-size: 12px; margin-bottom: 8px; color: #333; }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #EFEFEF; /* Background geral da área de conteúdo */
+    color: #2D2D2D;
+    /* Remove a barra de rolagem do body, o scroll será por área */
+    overflow: hidden; 
+  }
+
+  /* --- Estrutura Principal --- */
+  .plugin-wrapper {
+    display: flex;
+    flex-direction: column;
+    height: 100vh; /* Ocupa toda a altura da janela do plugin */
+  }
+  
+  /* --- 1. Área das Abas --- */
+  .tabs-container {
+    background-color: #FFFFFF;
+    padding: 16px;
+    border-bottom: 1px solid #AEAEAE;
+    flex-shrink: 0; /* Impede que a área encolha */
+  }
+
+  .tabs {
+    display: flex;
+  }
+
+  .tab {
+    font-size: 14px;
+    margin-right: 16px;
+    cursor: pointer;
+    font-weight: 400; /* Regular */
+    color: #AEAEAE;
+  }
+
+  .tab.active {
+    /* Estilo item selecionado */
+    font-weight: 600; /* Semibold */
+    color: #2D2D2D;
+  }
+  
+  /* --- 2. Área de Conteúdo (Inputs) --- */
+  .content-area {
+    flex-grow: 1; /* Faz esta área ocupar todo o espaço restante */
+    overflow-y: auto; /* Adiciona scroll apenas se o conteúdo transbordar */
+    padding: 16px;
+  }
+
+  .container { /* Empty state */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    color: #5F5F5F;
+    height: 100%;
+  }
+  .container p {
+    margin: 0;
+  }
+  .container p:last-child {
+    font-size: 12px;
+    margin-top: 4px;
+  }
+
+  .text-list {
+    width: 100%;
+    text-align: left;
+  }
+
+  .frame-group {
+    margin-bottom: 16px;
+  }
+
+  .frame-title {
+    /* Label da caixa de texto */
+    font-size: 13px;
+    font-weight: 600; /* Bold */
+    color: #2D2D2D;
+    margin-bottom: 8px;
+  }
+
   .input-wrapper {
     position: relative;
     width: 100%;
     margin-bottom: 8px;
   }
+
   input[type="text"] {
     width: 100%;
-    padding: 8px;
-    padding-right: 28px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
+    padding: 12px 12px;
+    padding-right: 32px; /* Espaço para o ícone de reset */
+    border: 1px solid #AEAEAE;
+    border-radius: 8px;
     box-sizing: border-box;
+    background-color: #FFFFFF;
+    transition: border-color 0.2s;
+
+    /* Estilo do texto do input */
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    font-weight: 400; /* Regular */
+    color: #5F5F5F;
   }
+  input[type="text"]:focus {
+    outline: none;
+    border: 1px solid #2D2D2D;
+  }
+
   .reset-icon {
     position: absolute;
-    right: 8px;
+    right: 12px;
     top: 50%;
     transform: translateY(-50%);
     width: 16px;
     height: 16px;
     cursor: pointer;
-    opacity: 0.6;
-    transition: opacity 0.2s;
+    transition: opacity 0.1s, visibility 0.2s;
     visibility: hidden;
+    color: #5F5F5F;
+    opacity: 0.5 ;
   }
   .reset-icon:hover { opacity: 1; }
   .reset-icon.visible { visibility: visible; }
+  
+  /* --- 3. Área dos Botões --- */
+  .footer {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    padding: 20px;
+    background-color: #FFFFFF;
+    border-top: 0.5px solid #AEAEAE; /* Linha divisória superior */
+    flex-shrink: 0; /* Impede que a área encolha */
+  }
 
-  .footer { position: fixed; bottom: 0; left: 0; right: 0; padding: 16px; display: flex; justify-content: flex-end; background-color: #f5f5f5; }
-  button { border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 500; }
-  button#cancel { background: #e5e5e5; color: #000; margin-right: 8px; }
-  button#apply { background: #0D99FF; color: white; }
-  button:disabled { opacity: 0.5; cursor: not-allowed; }
-  .hidden { display: none; }
+  button {
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    font-weight: 600; /* Semibold */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s, color 0.2s;
+  }
+
+  /* Botão Aplicar */
+  button#apply {
+    /* Padding para guiar o tamanho */
+    padding: 12px 20px;
+  }
+  
+  .arrow {
+    margin-left: 8px; /* Espaçamento do texto para a seta */
+    transition: color 0.2s;
+  }
+
+  /* Estado Ativado do Aplicar */
+  button#apply {
+    background: #2D2D2D;
+    color: #FFFFFF;
+  }
+
+  /* Estado Desativado do Aplicar */
+  button#apply:disabled {
+    background: #DFDFDF;
+    color: #5F5F5F;
+    cursor: not-allowed;
+  }
+
+  .hidden {
+    display: none;
+  }
 </style>
 
-<div class="tabs">
-  <div class="tab active" id="tab-textos">Textos</div>
-  <div class="tab" id="tab-frames">Frames</div>
-</div>
+<div class="plugin-wrapper">
 
-<div id="empty-state" class="container">
-  <p>Nenhum texto selecionado</p>
-  <p style="font-size: 12px;">Selecione segurando Ctrl+Shift</p>
-</div>
-
-<div id="text-list-container" class="text-list hidden">
+  <div class="tabs-container">
+    <div class="tabs">
+      <div class="tab active" id="tab-textos">Textos</div>
+      <div class="tab" id="tab-frames">Frames</div>
+      
+    </div>
   </div>
 
-<div class="footer">
-  <button id="cancel">Cancelar</button>
-  <button id="apply" disabled>Aplicar</button>
+  <div class="content-area">
+    <div id="empty-state" class="container">
+      <p>Nenhum texto selecionado</p>
+      <p>Selecione segurando Ctrl+Shift</p>
+    </div>
+    <div id="text-list-container" class="text-list hidden">
+      </div>
+  </div>
+
+  <div class="footer">
+    <button id="apply" disabled>
+      Aplicar
+      <span class="arrow">→</span>
+    </button>
+  </div>
+
 </div>
 
 
 <script>
-  // Pega referência das abas
+  // Pega referência dos elementos
   const tabTextos = document.getElementById('tab-textos');
   const tabFrames = document.getElementById('tab-frames');
   const emptyState = document.getElementById('empty-state');
-  const emptyStateParagraph = emptyState.querySelector('p'); // Pega o parágrafo da mensagem
+  const emptyStateParagraph = emptyState.querySelector('p');
   const textListContainer = document.getElementById('text-list-container');
   const applyButton = document.getElementById('apply');
-  const cancelButton = document.getElementById('cancel');
+  
+  // CORREÇÃO 1: Removida a linha abaixo pois o botão #cancel não existe mais no HTML.
+  // const cancelButton = document.getElementById('cancel');
 
   // Variável para controlar o modo atual
   let currentMode = 'textos';
+
+  // Guarda os últimos dados recebidos do figma
+  let lastReceivedData = null;
 
   // --- LÓGICA DE TROCA DE ABAS ---
   function setMode(mode) {
@@ -89,18 +242,23 @@
     tabFrames.classList.toggle('active', mode === 'frames');
 
     // Força a re-renderização com os últimos dados recebidos
-    // (O "true" é um truque para forçar a re-renderização)
-    window.onmessage({ data: { pluginMessage: { type: 'force-rerender' } } }, true);
+    if (lastReceivedData) {
+      renderContent(lastReceivedData);
+    }
     applyButton.disabled = true; // Sempre desabilita o botão ao trocar de aba
   }
 
   tabTextos.onclick = () => setMode('textos');
   tabFrames.onclick = () => setMode('frames');
 
-  // Guarda os últimos dados recebidos do figma
-  let lastReceivedData = null;
-
-  // --- FUNÇÕES DE RENDERIZAÇÃO SEPARADAS ---
+  // --- FUNÇÕES DE RENDERIZAÇÃO ---
+  function renderContent(data) {
+    if (currentMode === 'textos') {
+      renderTextView(data.textData);
+    } else {
+      renderFrameView(data.frameData);
+    }
+  }
 
   function renderTextView(textData) {
     const frameIds = Object.keys(textData);
@@ -113,7 +271,6 @@
       textListContainer.classList.remove('hidden');
       textListContainer.innerHTML = ''; // Limpa a lista
       for (const frameId of frameIds) {
-        // ... (código para renderizar textos, exatamente como antes) ...
         const frameData = textData[frameId];
         const frameGroup = document.createElement('div');
         frameGroup.className = 'frame-group';
@@ -129,9 +286,13 @@
           input.value = textNode.characters;
           input.dataset.nodeId = textNode.nodeId;
           input.dataset.originalText = textNode.characters;
-          const resetIcon = document.createElement('span');
+          
+          // CORREÇÃO 2: Alterado para usar uma tag <img> com o caminho do seu arquivo SVG.
+          const resetIcon = document.createElement('img');
           resetIcon.className = 'reset-icon';
-          resetIcon.innerHTML = `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 4.5a7.5 7.5 0 1 0 5.418 13.04M12 4.5V1.5m0 3L9 1.5m3 3l3-3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+          resetIcon.src = "data:image/svg+xml,%3Csvg%20width='16'%20height='15'%20viewBox='0%200%2016%2015'%20fill='none'%20xmlns='http://www.w3.org/2000/svg'%3E%3Cpath%20d='M3.72225%201.5L1%203.75M1%203.75L3.72225%206.375M1%203.75H9.94219C12.6189%203.75%2014.892%205.8575%2014.9962%208.4375C15.1067%2011.1637%2012.7706%2013.5%209.94219%2013.5H3.33258'%20stroke='%235F5F5F'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'/%3E%3C/svg%3E";
+
+          
           wrapper.appendChild(input);
           wrapper.appendChild(resetIcon);
           frameGroup.appendChild(wrapper);
@@ -150,11 +311,10 @@
       emptyState.classList.add('hidden');
       textListContainer.classList.remove('hidden');
       textListContainer.innerHTML = ''; // Limpa a lista
-      // Cria um único grupo para os frames
       const frameGroup = document.createElement('div');
       frameGroup.className = 'frame-group';
+      // Os frames não precisam de um título de grupo, então renderizamos direto
       for (const frameNode of frameData) {
-        // ... (código similar para renderizar inputs dos frames) ...
         const wrapper = document.createElement('div');
         wrapper.className = 'input-wrapper';
         const input = document.createElement('input');
@@ -162,9 +322,13 @@
         input.value = frameNode.name;
         input.dataset.nodeId = frameNode.nodeId;
         input.dataset.originalText = frameNode.name;
-        const resetIcon = document.createElement('span');
+
+        // CORREÇÃO 2: Alterado para usar uma tag <img> com o caminho do seu arquivo SVG.
+        const resetIcon = document.createElement('img');
         resetIcon.className = 'reset-icon';
-        resetIcon.innerHTML = `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 4.5a7.5 7.5 0 1 0 5.418 13.04M12 4.5V1.5m0 3L9 1.5m3 3l3-3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+        resetIcon.src = "data:image/svg+xml,%3Csvg%20width='16'%20height='15'%20viewBox='0%200%2016%2015'%20fill='none'%20xmlns='http://www.w3.org/2000/svg'%3E%3Cpath%20d='M3.72225%201.5L1%203.75M1%203.75L3.72225%206.375M1%203.75H9.94219C12.6189%203.75%2014.892%205.8575%2014.9962%208.4375C15.1067%2011.1637%2012.7706%2013.5%209.94219%2013.5H3.33258'%20stroke='%235F5F5F'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'/%3E%3C/svg%3E";
+
+
         wrapper.appendChild(input);
         wrapper.appendChild(resetIcon);
         frameGroup.appendChild(wrapper);
@@ -174,34 +338,40 @@
   }
 
   // --- OUVINTE PRINCIPAL DE MENSAGENS ---
-  window.onmessage = (event, force = false) => {
+  window.onmessage = (event) => {
     const msg = event.data.pluginMessage;
-    // Se a mensagem não for de rerender, guardamos os dados
+    // Guarda a última seleção recebida
     if (msg.type === 'selectionChange') {
       lastReceivedData = msg;
-    }
-    
-    if (lastReceivedData) {
-      if (currentMode === 'textos') {
-        renderTextView(lastReceivedData.textData);
-      } else {
-        renderFrameView(lastReceivedData.frameData);
-      }
+      applyButton.disabled = true; // Desabilita o botão ao receber nova seleção
+      renderContent(lastReceivedData);
     }
   };
   
+  // --- LÓGICA DOS EVENTOS DE UI ---
   textListContainer.addEventListener('input', (event) => {
     if (event.target.tagName === 'INPUT') {
       const input = event.target;
       const resetIcon = input.nextElementSibling;
+      let hasChanges = false;
 
-      // Compara o valor atual com o original
+      // Mostra/esconde ícone de reset individual
       if (input.value !== input.dataset.originalText) {
-        resetIcon.classList.add('visible'); // Icone de reset visível
+        resetIcon.classList.add('visible');
       } else {
-        resetIcon.classList.remove('visible'); // Icone de reset invisível
+        resetIcon.classList.remove('visible');
       }
-      applyButton.disabled = false; // Habilita o botão de aplicar
+      
+      // Verifica se qualquer input foi alterado para habilitar o botão "Aplicar"
+      const allInputs = textListContainer.querySelectorAll('input[type="text"]');
+      for (const i of allInputs) {
+          if (i.value !== i.dataset.originalText) {
+              hasChanges = true;
+              break; // Otimização: para a verificação assim que achar a primeira mudança
+          }
+      }
+
+      applyButton.disabled = !hasChanges;
     }
   });
 
@@ -213,30 +383,40 @@
       
       input.value = input.dataset.originalText;
       resetIcon.classList.remove('visible');
+
+      // Dispara um evento de input para revalidar o estado do botão "Aplicar"
+      input.dispatchEvent(new Event('input', { bubbles: true }));
     }
   });
 
+  // CORREÇÃO 1: Removida a função de clique do botão #cancel, pois ele não existe.
+  /*
   cancelButton.onclick = () => {
     parent.postMessage({ pluginMessage: { type: 'cancel' } }, '*');
   }
+  */
 
   applyButton.onclick = () => {
     const inputs = textListContainer.querySelectorAll('input[type="text"]');
     const changes = [];
     
-    if (currentMode === 'textos') {
-      inputs.forEach(input => {
-        changes.push({ nodeId: input.dataset.nodeId, newText: input.value });
-      });
-      parent.postMessage({ pluginMessage: { type: 'apply-changes', data: changes } }, '*');
-    } else { // Modo Frames
-      inputs.forEach(input => {
-        changes.push({ nodeId: input.dataset.nodeId, newName: input.value });
-      });
-      parent.postMessage({ pluginMessage: { type: 'apply-frame-name-changes', data: changes } }, '*');
+    inputs.forEach(input => {
+        // Envia apenas os dados que foram realmente alterados
+        if (input.value !== input.dataset.originalText) {
+            if (currentMode === 'textos') {
+                changes.push({ nodeId: input.dataset.nodeId, newText: input.value });
+            } else { // Modo Frames
+                changes.push({ nodeId: input.dataset.nodeId, newName: input.value });
+            }
+        }
+    });
+
+    if (changes.length > 0) {
+        const messageType = currentMode === 'textos' ? 'apply-changes' : 'apply-frame-name-changes';
+        parent.postMessage({ pluginMessage: { type: messageType, data: changes } }, '*');
     }
 
-    // Reseta o estado do botão e dos inputs
+    // Reseta o estado do botão e atualiza o "texto original" dos inputs
     applyButton.disabled = true;
     inputs.forEach(input => {
       input.dataset.originalText = input.value;
@@ -245,5 +425,15 @@
         resetIcon.classList.remove('visible');
       }
     });
+
+    document.addEventListener('keydown', (event) => {
+      const isEnter = event.key === 'Enter' || event.keyCode === 13;
+
+      // Verifica se o foco está em um input de texto e se o botão "Aplicar" está habilitado
+      if (isEnter && document.activeElement.tagName === 'INPUT' && !applyButton.disabled) {
+        applyButton.click();
+      }
+    });
+
   }
-</script> 
+</script>

@@ -112,7 +112,7 @@ figma.ui.onmessage = async (msg) => {
         node.characters = change.newText;
       }
     }
-    figma.notify("Textos atualizados!");
+    figma.notify("texts atualizados!");
   }
 
   if (msg.type === 'apply-frame-name-changes') {

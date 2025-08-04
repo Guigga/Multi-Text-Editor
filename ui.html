@@ -247,7 +247,19 @@
     padding: 8px 12px;
     border-radius: 6px;
     margin-top: 12px;
-    font-size: 13px;
+    font-size: 8px;
+  }
+
+  .kbd, kbd {
+    background-color: #F5F5F5;
+    border: 1px solid #CCC;
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-size: 12px;
+    font-family: 'Inter', monospace;
+    box-shadow: inset 0 -1px 0 #BBB;
+    color: #2D2D2D;
+    margin: 0 2px;
   }
 
   #undo-button {
@@ -271,7 +283,7 @@
 <div class="plugin-wrapper">
   <div class="tabs-container">
     <div class="tabs">
-      <div class="tab active" id="tab-textos">Textos</div>
+      <div class="tab active" id="tab-texts">Texts</div>
       <div class="tab" id="tab-frames">Frames</div>
       <div class="tab" id="tab-finder">Finder</div>
     </div>
@@ -279,8 +291,10 @@
 
   <div class="content-area">
     <div id="empty-state" class="container">
-      <p>Nenhum texto selecionado</p>
-      <p>Selecione segurando Ctrl+Shift</p>
+      <p style="font-size: 14px;">No text selected</p>
+      <p style="font-size: 15px;">
+        Select by holding <kbd>Ctrl</kbd> + <kbd>Shift</kbd>
+      </p>
     </div>
     <div id="text-list-container" class="text-list hidden"></div>
 
@@ -295,14 +309,14 @@
           </div>
         </div>
         <div class="input-wrapper">
-          <input type="text" id="find-input" placeholder="O que você procura?">
+          <input type="text" id="find-input" placeholder="What are you looking for?">
           <button id="case-sensitive-toggle">Aa</button>
         </div>
       </div>
       <div class="finder-section">
         <div class="finder-title">Replace</div>
         <div class="input-wrapper">
-          <input type="text" id="replace-input" placeholder="Substituir com...">
+          <input type="text" id="replace-input" placeholder="Replace with...">
         </div>
         <div class="finder-actions">
           <button id="replace-single" disabled>Replace</button>
@@ -311,7 +325,7 @@
 
         <div id="feedback-container" class="feedback-container hidden">
             <span id="feedback-message"></span>
-            <button id="undo-button">Desfazer</button>
+            <button id="undo-button">Undo</button>
         </div>
 
       </div>
@@ -324,7 +338,7 @@
     </div>
   </div>
 
-  <div class="footer hidden"> <button id="apply" disabled>Aplicar<span class="arrow">→</span></button>
+  <div class="footer hidden"> <button id="apply" disabled>Apply<span class="arrow">→</span></button>
   </div>
 </div>
 
@@ -335,7 +349,7 @@
   const feedbackMessage = document.getElementById('feedback-message');
   const undoButton = document.getElementById('undo-button');
 
-  const tabTextos = document.getElementById('tab-textos');
+  const tabtexts = document.getElementById('tab-texts');
   const tabFrames = document.getElementById('tab-frames');
   const emptyState = document.getElementById('empty-state');
   const textListContainer = document.getElementById('text-list-container');
@@ -355,7 +369,7 @@
   const replaceAllBtn = document.getElementById('replace-all');
   const caseSensitiveToggle = document.getElementById('case-sensitive-toggle');
 
-  let currentMode = 'textos';
+  let currentMode = 'texts';
   let lastReceivedData = null;
   let currentOriginalNodeText = '';
   let searchResultsCount = 0;
@@ -368,7 +382,7 @@
   // --- LÓGICA DE TROCA DE ABAS ---
   function setMode(mode) {
     currentMode = mode;
-    tabTextos.classList.toggle('active', mode === 'textos');
+    tabtexts.classList.toggle('active', mode === 'texts');
     tabFrames.classList.toggle('active', mode === 'frames');
     tabFinder.classList.toggle('active', mode === 'finder');
 
@@ -386,13 +400,13 @@
     }
   }
 
-  tabTextos.onclick = () => setMode('textos');
+  tabtexts.onclick = () => setMode('texts');
   tabFrames.onclick = () => setMode('frames');
   tabFinder.onclick = () => setMode('finder');
 
   // --- FUNÇÕES DE RENDERIZAÇÃO ---
   function renderContent(data) {
-    if (currentMode === 'textos') {
+    if (currentMode === 'texts') {
       renderTextView(data.textData);
     } else {
       renderFrameView(data.frameData);
@@ -402,7 +416,7 @@
   function renderTextView(textData) {
     const frameIds = Object.keys(textData);
     if (frameIds.length === 0) {
-      emptyState.querySelector('p:first-child').textContent = 'Nenhum texto selecionado';
+      emptyState.querySelector('p:first-child').textContent = 'No text selected';
       emptyState.classList.remove('hidden');
       textListContainer.classList.add('hidden');
       footer.classList.add('hidden');
@@ -441,7 +455,7 @@
 
   function renderFrameView(frameData) {
     if (frameData.length === 0) {
-      emptyState.querySelector('p:first-child').textContent = 'Nenhum frame selecionado';
+      emptyState.querySelector('p:first-child').textContent = 'No frames selected';
       emptyState.classList.remove('hidden');
       textListContainer.classList.add('hidden');
       footer.classList.add('hidden');
@@ -545,7 +559,7 @@
             break;
 
         case 'replace-success':
-            feedbackMessage.textContent = `${msg.count} ${msg.count > 1 ? 'itens substituídos' : 'item substituído'}.`;
+            feedbackMessage.textContent = `${msg.count} ${msg.count > 1 ? 'replaced items' : 'replaced item'}.`;
             feedbackContainer.classList.remove('hidden');
             
             if (msg.allReplaced) {
@@ -626,7 +640,7 @@
     
     inputs.forEach(input => {
         if (input.value !== input.dataset.originalText) {
-            if (currentMode === 'textos') {
+            if (currentMode === 'texts') {
                 changes.push({ nodeId: input.dataset.nodeId, newText: input.value });
             } else {
                 changes.push({ nodeId: input.dataset.nodeId, newName: input.value });
@@ -635,7 +649,7 @@
     });
 
     if (changes.length > 0) {
-        const messageType = currentMode === 'textos' ? 'apply-changes' : 'apply-frame-name-changes';
+        const messageType = currentMode === 'texts' ? 'apply-changes' : 'apply-frame-name-changes';
         parent.postMessage({ pluginMessage: { type: messageType, data: changes } }, '*');
     }
 

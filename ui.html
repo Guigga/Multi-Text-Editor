@@ -1,8 +1,6 @@
 <style>
-  /* Importa a fonte Inter do Google Fonts */
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
 
-  /* Reset e Configurações Globais */
   * {
     box-sizing: border-box;
   }
@@ -11,9 +9,8 @@
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
     margin: 0;
     padding: 0;
-    background-color: #EFEFEF; /* Background geral da área de conteúdo */
+    background-color: #EFEFEF;
     color: #2D2D2D;
-    /* Remove a barra de rolagem do body, o scroll será por área */
     overflow: hidden; 
   }
 
@@ -29,7 +26,7 @@
     background-color: #FFFFFF;
     padding: 16px;
     border-bottom: 1px solid #AEAEAE;
-    flex-shrink: 0; /* Impede que a área encolha */
+    flex-shrink: 0;
   }
 
   .tabs {
@@ -40,24 +37,23 @@
     font-size: 14px;
     margin-right: 16px;
     cursor: pointer;
-    font-weight: 400; /* Regular */
+    font-weight: 400;
     color: #AEAEAE;
   }
 
   .tab.active {
-    /* Estilo item selecionado */
-    font-weight: 600; /* Semibold */
+    font-weight: 600;
     color: #2D2D2D;
   }
   
   /* --- 2. Área de Conteúdo (Inputs) --- */
   .content-area {
-    flex-grow: 1; /* Faz esta área ocupar todo o espaço restante */
-    overflow-y: auto; /* Adiciona scroll apenas se o conteúdo transbordar */
+    flex-grow: 1;
+    overflow-y: auto;
     padding: 16px;
   }
 
-  .container { /* Empty state */
+  .container {
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -84,9 +80,8 @@
   }
 
   .frame-title {
-    /* Label da caixa de texto */
     font-size: 13px;
-    font-weight: 600; /* Bold */
+    font-weight: 600;
     color: #2D2D2D;
     margin-bottom: 8px;
   }
@@ -100,17 +95,16 @@
   input[type="text"] {
     width: 100%;
     padding: 12px 12px;
-    padding-right: 32px; /* Espaço para o ícone de reset */
+    padding-right: 32px;
     border: 1px solid #AEAEAE;
     border-radius: 8px;
     box-sizing: border-box;
     background-color: #FFFFFF;
     transition: border-color 0.2s;
 
-    /* Estilo do texto do input */
     font-family: 'Inter', sans-serif;
     font-size: 14px;
-    font-weight: 400; /* Regular */
+    font-weight: 400;
     color: #5F5F5F;
   }
   input[type="text"]:focus {
@@ -133,16 +127,15 @@
   }
   .reset-icon:hover { opacity: 1; }
   .reset-icon.visible { visibility: visible; }
-  
-  /* --- 3. Área dos Botões --- */
+
   .footer {
     display: flex;
     justify-content: flex-end;
     align-items: center;
     padding: 20px;
     background-color: #FFFFFF;
-    border-top: 0.5px solid #AEAEAE; /* Linha divisória superior */
-    flex-shrink: 0; /* Impede que a área encolha */
+    border-top: 0.5px solid #AEAEAE;
+    flex-shrink: 0;
   }
 
   button {
@@ -249,8 +242,8 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background-color: #e0f2fe; /* Um azul bem claro */
-    color: #0c4a6e; /* Um azul escuro */
+    background-color: #e0f2fe;
+    color: #0c4a6e;
     padding: 8px 12px;
     border-radius: 6px;
     margin-top: 12px;
@@ -259,8 +252,8 @@
 
   #undo-button {
     background: none;
-    border: 1px solid #0ea5e9; /* Azul */
-    color: #0284c7; /* Azul mais escuro */
+    border: 1px solid #0ea5e9;
+    color: #0284c7;
     padding: 4px 10px;
     border-radius: 4px;
     font-size: 12px;
@@ -341,7 +334,7 @@
   const feedbackContainer = document.getElementById('feedback-container');
   const feedbackMessage = document.getElementById('feedback-message');
   const undoButton = document.getElementById('undo-button');
-  // Referências de elementos existentes
+
   const tabTextos = document.getElementById('tab-textos');
   const tabFrames = document.getElementById('tab-frames');
   const emptyState = document.getElementById('empty-state');
@@ -349,7 +342,6 @@
   const applyButton = document.getElementById('apply');
   const footer = document.querySelector('.footer');
 
-  // Referências do Finder
   const tabFinder = document.getElementById('tab-finder');
   const finderContainer = document.getElementById('finder-container');
   const findInput = document.getElementById('find-input');
@@ -363,10 +355,9 @@
   const replaceAllBtn = document.getElementById('replace-all');
   const caseSensitiveToggle = document.getElementById('case-sensitive-toggle');
 
-  // Variáveis de estado
   let currentMode = 'textos';
   let lastReceivedData = null;
-  let currentOriginalNodeText = ''; // Guarda o texto original do nó em foco
+  let currentOriginalNodeText = '';
   let searchResultsCount = 0;
   let isCaseSensitive = false;
 
@@ -377,19 +368,16 @@
   // --- LÓGICA DE TROCA DE ABAS ---
   function setMode(mode) {
     currentMode = mode;
-    // Atualiza o visual das abas
     tabTextos.classList.toggle('active', mode === 'textos');
     tabFrames.classList.toggle('active', mode === 'frames');
     tabFinder.classList.toggle('active', mode === 'finder');
-    
-    // Mostra/esconde o botão 'Aplicar' e o container principal
+
     const isFinderMode = mode === 'finder';
-    footer.classList.toggle('hidden', isFinderMode); // Esconde todo o footer
+    footer.classList.toggle('hidden', isFinderMode);
     finderContainer.classList.toggle('hidden', !isFinderMode);
     textListContainer.classList.toggle('hidden', isFinderMode);
     emptyState.classList.toggle('hidden', isFinderMode);
 
-    // Se não for finder, renderiza o conteúdo da seleção
     if (!isFinderMode) {
       if (lastReceivedData) {
         renderContent(lastReceivedData);
@@ -414,16 +402,15 @@
   function renderTextView(textData) {
     const frameIds = Object.keys(textData);
     if (frameIds.length === 0) {
-      // A LINHA PROBLEMÁTICA ESTAVA AQUI E FOI REMOVIDA
       emptyState.querySelector('p:first-child').textContent = 'Nenhum texto selecionado';
       emptyState.classList.remove('hidden');
       textListContainer.classList.add('hidden');
-      footer.classList.add('hidden'); // Garante que o footer também some
+      footer.classList.add('hidden');
     } else {
       emptyState.classList.add('hidden');
       textListContainer.classList.remove('hidden');
-      footer.classList.remove('hidden'); // Mostra o footer se houver itens
-      textListContainer.innerHTML = ''; // Limpa a lista
+      footer.classList.remove('hidden');
+      textListContainer.innerHTML = '';
       for (const frameId of frameIds) {
         const frameData = textData[frameId];
         const frameGroup = document.createElement('div');
@@ -433,7 +420,6 @@
         title.textContent = frameData.frameName;
         frameGroup.appendChild(title);
         for (const textNode of frameData.textNodes) {
-          // O resto do código continua igual...
           const wrapper = document.createElement('div');
           wrapper.className = 'input-wrapper';
           const input = document.createElement('input');
@@ -455,20 +441,18 @@
 
   function renderFrameView(frameData) {
     if (frameData.length === 0) {
-      // A LINHA PROBLEMÁTICA ESTAVA AQUI E FOI REMOVIDA
       emptyState.querySelector('p:first-child').textContent = 'Nenhum frame selecionado';
       emptyState.classList.remove('hidden');
       textListContainer.classList.add('hidden');
-      footer.classList.add('hidden'); // Garante que o footer também some
+      footer.classList.add('hidden');
     } else {
       emptyState.classList.add('hidden');
       textListContainer.classList.remove('hidden');
-      footer.classList.remove('hidden'); // Mostra o footer se houver itens
-      textListContainer.innerHTML = ''; // Limpa a lista
+      footer.classList.remove('hidden');
+      textListContainer.innerHTML = '';
       const frameGroup = document.createElement('div');
       frameGroup.className = 'frame-group';
       for (const frameNode of frameData) {
-        // O resto do código continua igual...
         const wrapper = document.createElement('div');
         wrapper.className = 'input-wrapper';
         const input = document.createElement('input');
@@ -493,7 +477,6 @@
     if (currentOriginalNodeText === '' || findValue === '') {
       previewText.value = currentOriginalNodeText;
     } else {
-      // Usa RegExp para o preview refletir a opção de case-sensitive
       const regex = new RegExp(findValue, isCaseSensitive ? '' : 'i');
       previewText.value = currentOriginalNodeText.replace(regex, replaceValue);
     }
@@ -535,16 +518,14 @@
       pluginMessage: {
         type: 'find-text',
         query: findInput.value,
-        isCaseSensitive: isCaseSensitive // Envia o estado do botão
+        isCaseSensitive: isCaseSensitive
       }
     }, '*');
   }
 
-  // --- OUVINTE PRINCIPAL DE MENSAGENS ---
   window.onmessage = (event) => {
     const msg = event.data.pluginMessage;
 
-    // Esconde a mensagem de 'Desfazer' em quase todas as ações para limpar a UI
     if (msg.type !== 'replace-success') {
         hideFeedback();
     }
@@ -568,15 +549,13 @@
             feedbackContainer.classList.remove('hidden');
             
             if (msg.allReplaced) {
-                // Se foi 'Replace All', limpa a UI do finder
                 resetFinderUI();
             } else if (msg.updatedNode) {
-                // Se foi 'Replace Single', apenas atualiza a UI com os novos dados
                 updateFinderUI(msg.updatedNode.index, msg.updatedNode.count, msg.updatedNode.nodeText);
             }
             break;
             
-        case 'all-replace-success': // Este caso pode ser mantido ou removido se a lógica de 'replace-success' cobrir tudo
+        case 'all-replace-success':
             resetFinderUI();
             break;
 
@@ -586,7 +565,6 @@
 
         case 'undo-complete':
             hideFeedback();
-            // Após desfazer, é bom re-disparar a busca para atualizar o contador
             triggerSearch();
             break;
     }
@@ -596,8 +574,6 @@
     parent.postMessage({ pluginMessage: { type: 'undo-last-change' } }, '*');
   };
 
-
-  // Adicione a chamada `hideFeedback()` em eventos que indicam uma nova ação do usuário
   findInput.addEventListener('input', () => {
       hideFeedback();
       triggerSearch();
@@ -608,26 +584,23 @@
       updateButtonStates();
   });
   
-  // --- LÓGICA DOS EVENTOS DE UI ---
   textListContainer.addEventListener('input', (event) => {
     if (event.target.tagName === 'INPUT') {
       const input = event.target;
       const resetIcon = input.nextElementSibling;
       let hasChanges = false;
 
-      // Mostra/esconde ícone de reset individual
       if (input.value !== input.dataset.originalText) {
         resetIcon.classList.add('visible');
       } else {
         resetIcon.classList.remove('visible');
       }
       
-      // Verifica se qualquer input foi alterado para habilitar o botão "Aplicar"
       const allInputs = textListContainer.querySelectorAll('input[type="text"]');
       for (const i of allInputs) {
           if (i.value !== i.dataset.originalText) {
               hasChanges = true;
-              break; // Otimização: para a verificação assim que achar a primeira mudança
+              break;
           }
       }
 
@@ -643,29 +616,19 @@
       
       input.value = input.dataset.originalText;
       resetIcon.classList.remove('visible');
-
-      // Dispara um evento de input para revalidar o estado do botão "Aplicar"
       input.dispatchEvent(new Event('input', { bubbles: true }));
     }
   });
-
-  // CORREÇÃO 1: Removida a função de clique do botão #cancel, pois ele não existe.
-  /*
-  cancelButton.onclick = () => {
-    parent.postMessage({ pluginMessage: { type: 'cancel' } }, '*');
-  }
-  */
 
   applyButton.onclick = () => {
     const inputs = textListContainer.querySelectorAll('input[type="text"]');
     const changes = [];
     
     inputs.forEach(input => {
-        // Envia apenas os dados que foram realmente alterados
         if (input.value !== input.dataset.originalText) {
             if (currentMode === 'textos') {
                 changes.push({ nodeId: input.dataset.nodeId, newText: input.value });
-            } else { // Modo Frames
+            } else {
                 changes.push({ nodeId: input.dataset.nodeId, newName: input.value });
             }
         }
@@ -676,7 +639,6 @@
         parent.postMessage({ pluginMessage: { type: messageType, data: changes } }, '*');
     }
 
-    // Reseta o estado do botão e atualiza o "texto original" dos inputs
     applyButton.disabled = true;
     inputs.forEach(input => {
       input.dataset.originalText = input.value;
@@ -688,8 +650,6 @@
 
     document.addEventListener('keydown', (event) => {
       const isEnter = event.key === 'Enter' || event.keyCode === 13;
-
-      // Verifica se o foco está em um input de texto e se o botão "Aplicar" está habilitado
       if (isEnter && document.activeElement.tagName === 'INPUT' && !applyButton.disabled) {
         applyButton.click();
       }
@@ -704,9 +664,9 @@
   });
   
   caseSensitiveToggle.onclick = () => {
-    isCaseSensitive = !isCaseSensitive; // Inverte o estado
-    caseSensitiveToggle.classList.toggle('active', isCaseSensitive); // Atualiza a UI
-    triggerSearch(); // Refaz a busca com a nova configuração
+    isCaseSensitive = !isCaseSensitive;
+    caseSensitiveToggle.classList.toggle('active', isCaseSensitive);
+    triggerSearch();
   };
 
   finderNext.onclick = () => { parent.postMessage({ pluginMessage: { type: 'navigate', direction: 'next' } }, '*'); };
@@ -718,7 +678,7 @@
         type: 'replace-single',
         findText: findInput.value,
         replaceText: replaceInput.value,
-        isCaseSensitive: isCaseSensitive // Envia o estado
+        isCaseSensitive: isCaseSensitive
       } 
     }, '*');
   };
@@ -729,11 +689,10 @@
         type: 'replace-all',
         findText: findInput.value,
         replaceText: replaceInput.value,
-        isCaseSensitive: isCaseSensitive // Envia o estado
+        isCaseSensitive: isCaseSensitive
       } 
     }, '*');
   };
 
-  // Inicialização
   updateButtonStates();
 </script>

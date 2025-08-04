@@ -180,31 +180,48 @@
   }
 
   .finder-section { margin-bottom: 16px; }
-  .finder-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-  .finder-title { font-size: 13px; font-weight: 600; color: #2D2D2D; }
-  .finder-nav { display: flex; align-items: center; gap: 8px; }
+  .finder-header { display: flex; justify-content: space-between; align-items: center; }
+  .finder-title { font-size: 13px; font-weight: 600; color: #2D2D2D; margin-bottom: 4px; }
+  .finder-nav { display: flex; align-items: center; gap: 2px; margin-bottom: 1px; }
   .finder-nav span { font-size: 13px; color: #5F5F5F; min-width: 40px; text-align: center; }
-  .finder-nav button { background-color: transparent; color: #5F5F5F; padding: 2px 6px; border: 1px solid #AEAEAE; border-radius: 4px; }
+  .finder-nav button { background-color: transparent; color: #5F5F5F; padding: 4px 6px; border: 1px solid #AEAEAE; border-radius: 8px; }
   .finder-nav button:disabled { color: #C1C1C1; border-color: #EFEFEF; cursor: not-allowed; }
   .finder-nav button:hover:not(:disabled) { background-color: #DFDFDF; }
+
+  .finder-footer {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    padding: 20px 16px; /* antes era apenas 20px */
+    background-color: #FFFFFF;
+    border-top: 0.5px solid #AEAEAE;
+    flex-shrink: 0;
+    margin-top: auto;
+  }
 
   .finder-actions {
     display: flex;
     gap: 8px;
-    margin-top: 8px;
   }
+
   .finder-actions button {
-    flex-grow: 1; /* Faz os botões ocuparem o espaço igualmente */
-    padding: 10px;
+    padding: 12px 20px;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: 'Inter', sans-serif;
+    border-radius: 6px;
+    cursor: pointer;
   }
   #replace-single {
     background-color: #FFFFFF;
     color: #2D2D2D;
     border: 1px solid #AEAEAE;
   }
+
   #replace-all {
     background-color: #2D2D2D;
     color: #FFFFFF;
+    border: none;
   }
   .finder-actions button:disabled {
     background: #DFDFDF;
@@ -278,6 +295,24 @@
     background-color: #f0f9ff;
   }
 
+  #preview-text {
+    width: 100%;
+    height: 96px;
+    resize: none;
+    border: 1px solid #AEAEAE;
+    border-radius: 8px;
+    padding: 12px;
+    background-color: #F5F5F5;
+    color: #5F5F5F;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    box-sizing: border-box;
+  }
+
+  .hidden {
+    display: none !important;
+  }
+
 </style>
 
 <div class="plugin-wrapper">
@@ -318,28 +353,29 @@
         <div class="input-wrapper">
           <input type="text" id="replace-input" placeholder="Replace with...">
         </div>
-        <div class="finder-actions">
-          <button id="replace-single" disabled>Replace</button>
-          <button id="replace-all" disabled>Replace All</button>
-        </div>
-
-        <div id="feedback-container" class="feedback-container hidden">
-            <span id="feedback-message"></span>
-            <button id="undo-button">Undo</button>
-        </div>
 
       </div>
       <div class="finder-section">
         <div class="finder-title">Preview</div>
         <div class="input-wrapper">
-          <textarea id="preview-text" rows="4" readonly style="background-color: #F5F5F5; color: #5F5F5F;"></textarea>
+          <textarea id="preview-text" rows="4" readonly></textarea>
         </div>
       </div>
+
+      <div id="feedback-container" class="feedback-container hidden">
+            <span id="feedback-message"></span>
+            <button id="undo-button">Undo</button>
+        </div>
     </div>
   </div>
 
-  <div class="footer hidden"> <button id="apply" disabled>Apply<span class="arrow">→</span></button>
+  <div class="footer hidden" id="footer">
+  <div class="finder-actions hidden" id="finder-actions">
+    <button id="replace-single" disabled>Replace</button>
+    <button id="replace-all" disabled>Replace All</button>
   </div>
+  <button id="apply" disabled>Apply<span class="arrow">→</span></button>
+</div>
 </div>
 
 <div class="plugin-wrapper"></div>
@@ -354,7 +390,7 @@
   const emptyState = document.getElementById('empty-state');
   const textListContainer = document.getElementById('text-list-container');
   const applyButton = document.getElementById('apply');
-  const footer = document.querySelector('.footer');
+  const footer = document.getElementById('footer');
 
   const tabFinder = document.getElementById('tab-finder');
   const finderContainer = document.getElementById('finder-container');
@@ -368,6 +404,8 @@
   const replaceSingleBtn = document.getElementById('replace-single');
   const replaceAllBtn = document.getElementById('replace-all');
   const caseSensitiveToggle = document.getElementById('case-sensitive-toggle');
+
+  const finderActions = document.getElementById('finder-actions');
 
   let currentMode = 'texts';
   let lastReceivedData = null;
@@ -707,6 +745,25 @@
       } 
     }, '*');
   };
+
+  tabFinder.addEventListener('click', () => {
+  footer.classList.remove('hidden');
+  finderActions.classList.remove('hidden');
+  applyButton.classList.add('hidden'); // Esconde o botão Apply na aba Finder
+});
+
+// Também adicione o inverso nos outros tabs
+  document.getElementById('tab-texts').addEventListener('click', () => {
+    footer.classList.remove('hidden');
+    finderActions.classList.add('hidden');
+    applyButton.classList.remove('hidden');
+  });
+
+  document.getElementById('tab-frames').addEventListener('click', () => {
+    footer.classList.remove('hidden');
+    finderActions.classList.add('hidden');
+    applyButton.classList.remove('hidden');
+  });
 
   updateButtonStates();
 </script>

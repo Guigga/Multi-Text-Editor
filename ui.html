@@ -185,15 +185,102 @@
   .hidden {
     display: none;
   }
+
+  .finder-section { margin-bottom: 16px; }
+  .finder-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .finder-title { font-size: 13px; font-weight: 600; color: #2D2D2D; }
+  .finder-nav { display: flex; align-items: center; gap: 8px; }
+  .finder-nav span { font-size: 13px; color: #5F5F5F; min-width: 40px; text-align: center; }
+  .finder-nav button { background-color: transparent; color: #5F5F5F; padding: 2px 6px; border: 1px solid #AEAEAE; border-radius: 4px; }
+  .finder-nav button:disabled { color: #C1C1C1; border-color: #EFEFEF; cursor: not-allowed; }
+  .finder-nav button:hover:not(:disabled) { background-color: #DFDFDF; }
+
+  .finder-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+  }
+  .finder-actions button {
+    flex-grow: 1; /* Faz os botões ocuparem o espaço igualmente */
+    padding: 10px;
+  }
+  #replace-single {
+    background-color: #FFFFFF;
+    color: #2D2D2D;
+    border: 1px solid #AEAEAE;
+  }
+  #replace-all {
+    background-color: #2D2D2D;
+    color: #FFFFFF;
+  }
+  .finder-actions button:disabled {
+    background: #DFDFDF;
+    color: #5F5F5F;
+    cursor: not-allowed;
+    border-color: transparent;
+  }
+  #find-input {
+    /* Adiciona espaço à direita para o botão não sobrepor o texto */
+    padding-right: 40px; 
+  }
+  #case-sensitive-toggle {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    background-color: transparent;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    padding: 4px;
+    color: #AEAEAE;
+    font-size: 14px;
+    line-height: 1;
+    font-weight: 700;
+  }
+  #case-sensitive-toggle:hover {
+    background-color: #f0f0f0;
+  }
+  #case-sensitive-toggle.active {
+    background-color: #e0e0e0;
+    color: #2D2D2D;
+  }
+
+  .feedback-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #e0f2fe; /* Um azul bem claro */
+    color: #0c4a6e; /* Um azul escuro */
+    padding: 8px 12px;
+    border-radius: 6px;
+    margin-top: 12px;
+    font-size: 13px;
+  }
+
+  #undo-button {
+    background: none;
+    border: 1px solid #0ea5e9; /* Azul */
+    color: #0284c7; /* Azul mais escuro */
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+
+  #undo-button:hover {
+    background-color: #f0f9ff;
+  }
+
 </style>
 
 <div class="plugin-wrapper">
-
   <div class="tabs-container">
     <div class="tabs">
       <div class="tab active" id="tab-textos">Textos</div>
       <div class="tab" id="tab-frames">Frames</div>
-      
+      <div class="tab" id="tab-finder">Finder</div>
     </div>
   </div>
 
@@ -202,37 +289,90 @@
       <p>Nenhum texto selecionado</p>
       <p>Selecione segurando Ctrl+Shift</p>
     </div>
-    <div id="text-list-container" class="text-list hidden">
+    <div id="text-list-container" class="text-list hidden"></div>
+
+    <div id="finder-container" class="hidden">
+      <div class="finder-section">
+        <div class="finder-header">
+          <div class="finder-title">Finder</div>
+          <div class="finder-nav">
+            <button id="finder-prev" disabled>&lt;</button>
+            <span id="finder-counter">0/0</span>
+            <button id="finder-next" disabled>&gt;</button>
+          </div>
+        </div>
+        <div class="input-wrapper">
+          <input type="text" id="find-input" placeholder="O que você procura?">
+          <button id="case-sensitive-toggle">Aa</button>
+        </div>
       </div>
+      <div class="finder-section">
+        <div class="finder-title">Replace</div>
+        <div class="input-wrapper">
+          <input type="text" id="replace-input" placeholder="Substituir com...">
+        </div>
+        <div class="finder-actions">
+          <button id="replace-single" disabled>Replace</button>
+          <button id="replace-all" disabled>Replace All</button>
+        </div>
+
+        <div id="feedback-container" class="feedback-container hidden">
+            <span id="feedback-message"></span>
+            <button id="undo-button">Desfazer</button>
+        </div>
+
+      </div>
+      <div class="finder-section">
+        <div class="finder-title">Preview</div>
+        <div class="input-wrapper">
+          <textarea id="preview-text" rows="4" readonly style="background-color: #F5F5F5; color: #5F5F5F;"></textarea>
+        </div>
+      </div>
+    </div>
   </div>
 
-  <div class="footer">
-    <button id="apply" disabled>
-      Aplicar
-      <span class="arrow">→</span>
-    </button>
+  <div class="footer hidden"> <button id="apply" disabled>Aplicar<span class="arrow">→</span></button>
   </div>
-
 </div>
 
+<div class="plugin-wrapper"></div>
 
 <script>
-  // Pega referência dos elementos
+  const feedbackContainer = document.getElementById('feedback-container');
+  const feedbackMessage = document.getElementById('feedback-message');
+  const undoButton = document.getElementById('undo-button');
+  // Referências de elementos existentes
   const tabTextos = document.getElementById('tab-textos');
   const tabFrames = document.getElementById('tab-frames');
   const emptyState = document.getElementById('empty-state');
-  const emptyStateParagraph = emptyState.querySelector('p');
   const textListContainer = document.getElementById('text-list-container');
   const applyButton = document.getElementById('apply');
+  const footer = document.querySelector('.footer');
+
+  // Referências do Finder
+  const tabFinder = document.getElementById('tab-finder');
+  const finderContainer = document.getElementById('finder-container');
+  const findInput = document.getElementById('find-input');
+  const finderCounter = document.getElementById('finder-counter');
+  const finderPrev = document.getElementById('finder-prev');
+  const finderNext = document.getElementById('finder-next');
   
-  // CORREÇÃO 1: Removida a linha abaixo pois o botão #cancel não existe mais no HTML.
-  // const cancelButton = document.getElementById('cancel');
+  const replaceInput = document.getElementById('replace-input');
+  const previewText = document.getElementById('preview-text');
+  const replaceSingleBtn = document.getElementById('replace-single');
+  const replaceAllBtn = document.getElementById('replace-all');
+  const caseSensitiveToggle = document.getElementById('case-sensitive-toggle');
 
-  // Variável para controlar o modo atual
+  // Variáveis de estado
   let currentMode = 'textos';
-
-  // Guarda os últimos dados recebidos do figma
   let lastReceivedData = null;
+  let currentOriginalNodeText = ''; // Guarda o texto original do nó em foco
+  let searchResultsCount = 0;
+  let isCaseSensitive = false;
+
+  function hideFeedback() {
+    feedbackContainer.classList.add('hidden');
+  }
 
   // --- LÓGICA DE TROCA DE ABAS ---
   function setMode(mode) {
@@ -240,16 +380,27 @@
     // Atualiza o visual das abas
     tabTextos.classList.toggle('active', mode === 'textos');
     tabFrames.classList.toggle('active', mode === 'frames');
+    tabFinder.classList.toggle('active', mode === 'finder');
+    
+    // Mostra/esconde o botão 'Aplicar' e o container principal
+    const isFinderMode = mode === 'finder';
+    footer.classList.toggle('hidden', isFinderMode); // Esconde todo o footer
+    finderContainer.classList.toggle('hidden', !isFinderMode);
+    textListContainer.classList.toggle('hidden', isFinderMode);
+    emptyState.classList.toggle('hidden', isFinderMode);
 
-    // Força a re-renderização com os últimos dados recebidos
-    if (lastReceivedData) {
-      renderContent(lastReceivedData);
+    // Se não for finder, renderiza o conteúdo da seleção
+    if (!isFinderMode) {
+      if (lastReceivedData) {
+        renderContent(lastReceivedData);
+      }
+      applyButton.disabled = true;
     }
-    applyButton.disabled = true; // Sempre desabilita o botão ao trocar de aba
   }
 
   tabTextos.onclick = () => setMode('textos');
   tabFrames.onclick = () => setMode('frames');
+  tabFinder.onclick = () => setMode('finder');
 
   // --- FUNÇÕES DE RENDERIZAÇÃO ---
   function renderContent(data) {
@@ -261,92 +412,201 @@
   }
 
   function renderTextView(textData) {
-    const frameIds = Object.keys(textData);
-    if (frameIds.length === 0) {
-      emptyStateParagraph.textContent = 'Nenhum texto selecionado';
-      emptyState.classList.remove('hidden');
-      textListContainer.classList.add('hidden');
-    } else {
-      emptyState.classList.add('hidden');
-      textListContainer.classList.remove('hidden');
-      textListContainer.innerHTML = ''; // Limpa a lista
-      for (const frameId of frameIds) {
-        const frameData = textData[frameId];
-        const frameGroup = document.createElement('div');
-        frameGroup.className = 'frame-group';
-        const title = document.createElement('div');
-        title.className = 'frame-title';
-        title.textContent = frameData.frameName;
-        frameGroup.appendChild(title);
-        for (const textNode of frameData.textNodes) {
-          const wrapper = document.createElement('div');
-          wrapper.className = 'input-wrapper';
-          const input = document.createElement('input');
-          input.type = 'text';
-          input.value = textNode.characters;
-          input.dataset.nodeId = textNode.nodeId;
-          input.dataset.originalText = textNode.characters;
-          
-          // CORREÇÃO 2: Alterado para usar uma tag <img> com o caminho do seu arquivo SVG.
-          const resetIcon = document.createElement('img');
-          resetIcon.className = 'reset-icon';
-          resetIcon.src = "data:image/svg+xml,%3Csvg%20width='16'%20height='15'%20viewBox='0%200%2016%2015'%20fill='none'%20xmlns='http://www.w3.org/2000/svg'%3E%3Cpath%20d='M3.72225%201.5L1%203.75M1%203.75L3.72225%206.375M1%203.75H9.94219C12.6189%203.75%2014.892%205.8575%2014.9962%208.4375C15.1067%2011.1637%2012.7706%2013.5%209.94219%2013.5H3.33258'%20stroke='%235F5F5F'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'/%3E%3C/svg%3E";
-
-          
-          wrapper.appendChild(input);
-          wrapper.appendChild(resetIcon);
-          frameGroup.appendChild(wrapper);
-        }
-        textListContainer.appendChild(frameGroup);
-      }
-    }
+    const frameIds = Object.keys(textData);
+    if (frameIds.length === 0) {
+      // A LINHA PROBLEMÁTICA ESTAVA AQUI E FOI REMOVIDA
+      emptyState.querySelector('p:first-child').textContent = 'Nenhum texto selecionado';
+      emptyState.classList.remove('hidden');
+      textListContainer.classList.add('hidden');
+      footer.classList.add('hidden'); // Garante que o footer também some
+    } else {
+      emptyState.classList.add('hidden');
+      textListContainer.classList.remove('hidden');
+      footer.classList.remove('hidden'); // Mostra o footer se houver itens
+      textListContainer.innerHTML = ''; // Limpa a lista
+      for (const frameId of frameIds) {
+        const frameData = textData[frameId];
+        const frameGroup = document.createElement('div');
+        frameGroup.className = 'frame-group';
+        const title = document.createElement('div');
+        title.className = 'frame-title';
+        title.textContent = frameData.frameName;
+        frameGroup.appendChild(title);
+        for (const textNode of frameData.textNodes) {
+          // O resto do código continua igual...
+          const wrapper = document.createElement('div');
+          wrapper.className = 'input-wrapper';
+          const input = document.createElement('input');
+          input.type = 'text';
+          input.value = textNode.characters;
+          input.dataset.nodeId = textNode.nodeId;
+          input.dataset.originalText = textNode.characters;
+          const resetIcon = document.createElement('img');
+          resetIcon.className = 'reset-icon';
+          resetIcon.src = "data:image/svg+xml,%3Csvg%20width='16'%20height='15'%20viewBox='0%200%2016%2015'%20fill='none'%20xmlns='http://www.w3.org/2000/svg'%3E%3Cpath%20d='M3.72225%201.5L1%203.75M1%203.75L3.72225%206.375M1%203.75H9.94219C12.6189%203.75%2014.892%205.8575%2014.9962%208.4375C15.1067%2011.1637%2012.7706%2013.5%209.94219%2013.5H3.33258'%20stroke='%235F5F5F'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'/%3E%3C/svg%3E";
+          wrapper.appendChild(input);
+          wrapper.appendChild(resetIcon);
+          frameGroup.appendChild(wrapper);
+        }
+        textListContainer.appendChild(frameGroup);
+      }
+    }
   }
 
   function renderFrameView(frameData) {
-    if (frameData.length === 0) {
-      emptyStateParagraph.textContent = 'Nenhum frame selecionado';
-      emptyState.classList.remove('hidden');
-      textListContainer.classList.add('hidden');
+    if (frameData.length === 0) {
+      // A LINHA PROBLEMÁTICA ESTAVA AQUI E FOI REMOVIDA
+      emptyState.querySelector('p:first-child').textContent = 'Nenhum frame selecionado';
+      emptyState.classList.remove('hidden');
+      textListContainer.classList.add('hidden');
+      footer.classList.add('hidden'); // Garante que o footer também some
+    } else {
+      emptyState.classList.add('hidden');
+      textListContainer.classList.remove('hidden');
+      footer.classList.remove('hidden'); // Mostra o footer se houver itens
+      textListContainer.innerHTML = ''; // Limpa a lista
+      const frameGroup = document.createElement('div');
+      frameGroup.className = 'frame-group';
+      for (const frameNode of frameData) {
+        // O resto do código continua igual...
+        const wrapper = document.createElement('div');
+        wrapper.className = 'input-wrapper';
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.value = frameNode.name;
+        input.dataset.nodeId = frameNode.nodeId;
+        input.dataset.originalText = frameNode.name;
+        const resetIcon = document.createElement('img');
+        resetIcon.className = 'reset-icon';
+        resetIcon.src = "data:image/svg+xml,%3Csvg%20width='16'%20height='15'%20viewBox='0%200%2016%2015'%20fill='none'%20xmlns='http://www.w3.org/2000/svg'%3E%3Cpath%20d='M3.72225%201.5L1%203.75M1%203.75L3.72225%206.375M1%203.75H9.94219C12.6189%203.75%2014.892%205.8575%2014.9962%208.4375C15.1067%2011.1637%2012.7706%2013.5%209.94219%2013.5H3.33258'%20stroke='%235F5F5F'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'/%3E%3C/svg%3E";
+        wrapper.appendChild(input);
+        wrapper.appendChild(resetIcon);
+        frameGroup.appendChild(wrapper);
+      }
+      textListContainer.appendChild(frameGroup);
+    }
+  }
+
+  function updatePreview() {
+    const findValue = findInput.value;
+    const replaceValue = replaceInput.value;
+    if (currentOriginalNodeText === '' || findValue === '') {
+      previewText.value = currentOriginalNodeText;
     } else {
-      emptyState.classList.add('hidden');
-      textListContainer.classList.remove('hidden');
-      textListContainer.innerHTML = ''; // Limpa a lista
-      const frameGroup = document.createElement('div');
-      frameGroup.className = 'frame-group';
-      // Os frames não precisam de um título de grupo, então renderizamos direto
-      for (const frameNode of frameData) {
-        const wrapper = document.createElement('div');
-        wrapper.className = 'input-wrapper';
-        const input = document.createElement('input');
-        input.type = 'text';
-        input.value = frameNode.name;
-        input.dataset.nodeId = frameNode.nodeId;
-        input.dataset.originalText = frameNode.name;
-
-        // CORREÇÃO 2: Alterado para usar uma tag <img> com o caminho do seu arquivo SVG.
-        const resetIcon = document.createElement('img');
-        resetIcon.className = 'reset-icon';
-        resetIcon.src = "data:image/svg+xml,%3Csvg%20width='16'%20height='15'%20viewBox='0%200%2016%2015'%20fill='none'%20xmlns='http://www.w3.org/2000/svg'%3E%3Cpath%20d='M3.72225%201.5L1%203.75M1%203.75L3.72225%206.375M1%203.75H9.94219C12.6189%203.75%2014.892%205.8575%2014.9962%208.4375C15.1067%2011.1637%2012.7706%2013.5%209.94219%2013.5H3.33258'%20stroke='%235F5F5F'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'/%3E%3C/svg%3E";
-
-
-        wrapper.appendChild(input);
-        wrapper.appendChild(resetIcon);
-        frameGroup.appendChild(wrapper);
-      }
-      textListContainer.appendChild(frameGroup);
+      // Usa RegExp para o preview refletir a opção de case-sensitive
+      const regex = new RegExp(findValue, isCaseSensitive ? '' : 'i');
+      previewText.value = currentOriginalNodeText.replace(regex, replaceValue);
     }
+  }
+
+  function updateButtonStates() {
+    const hasResults = searchResultsCount > 0;
+    const hasReplaceText = replaceInput.value !== '';
+    replaceSingleBtn.disabled = !(hasResults && hasReplaceText);
+    replaceAllBtn.disabled = !(hasResults && hasReplaceText);
+  }
+  
+  function updateFinderUI(index, count, nodeText = '') {
+    searchResultsCount = count;
+    currentOriginalNodeText = nodeText;
+
+    const hasResults = count > 0;
+    finderCounter.textContent = `${hasResults ? index + 1 : 0}/${count}`;
+    finderPrev.disabled = !hasResults;
+    finderNext.disabled = !hasResults;
+
+    updatePreview();
+    updateButtonStates();
+  }
+  
+  function resetFinderUI() {
+    findInput.value = '';
+    replaceInput.value = '';
+    currentOriginalNodeText = '';
+    updateFinderUI(-1, 0);
+  }
+
+  function triggerSearch() {
+    if (findInput.value.trim() === '') {
+      updateFinderUI(-1, 0, '');
+      return;
+    }
+    parent.postMessage({
+      pluginMessage: {
+        type: 'find-text',
+        query: findInput.value,
+        isCaseSensitive: isCaseSensitive // Envia o estado do botão
+      }
+    }, '*');
   }
 
   // --- OUVINTE PRINCIPAL DE MENSAGENS ---
   window.onmessage = (event) => {
     const msg = event.data.pluginMessage;
-    // Guarda a última seleção recebida
-    if (msg.type === 'selectionChange') {
-      lastReceivedData = msg;
-      applyButton.disabled = true; // Desabilita o botão ao receber nova seleção
-      renderContent(lastReceivedData);
+
+    // Esconde a mensagem de 'Desfazer' em quase todas as ações para limpar a UI
+    if (msg.type !== 'replace-success') {
+        hideFeedback();
+    }
+    
+    switch (msg.type) {
+        case 'selectionChange':
+            lastReceivedData = msg;
+            if (currentMode !== 'finder') {
+                applyButton.disabled = true;
+                renderContent(lastReceivedData);
+            }
+            break;
+        
+        case 'search-result':
+        case 'navigation-update':
+            updateFinderUI(msg.index, msg.count, msg.nodeText);
+            break;
+
+        case 'replace-success':
+            feedbackMessage.textContent = `${msg.count} ${msg.count > 1 ? 'itens substituídos' : 'item substituído'}.`;
+            feedbackContainer.classList.remove('hidden');
+            
+            if (msg.allReplaced) {
+                // Se foi 'Replace All', limpa a UI do finder
+                resetFinderUI();
+            } else if (msg.updatedNode) {
+                // Se foi 'Replace Single', apenas atualiza a UI com os novos dados
+                updateFinderUI(msg.updatedNode.index, msg.updatedNode.count, msg.updatedNode.nodeText);
+            }
+            break;
+            
+        case 'all-replace-success': // Este caso pode ser mantido ou removido se a lógica de 'replace-success' cobrir tudo
+            resetFinderUI();
+            break;
+
+        case 'hide-undo':
+             hideFeedback();
+             break;
+
+        case 'undo-complete':
+            hideFeedback();
+            // Após desfazer, é bom re-disparar a busca para atualizar o contador
+            triggerSearch();
+            break;
     }
   };
+
+  undoButton.onclick = () => {
+    parent.postMessage({ pluginMessage: { type: 'undo-last-change' } }, '*');
+  };
+
+
+  // Adicione a chamada `hideFeedback()` em eventos que indicam uma nova ação do usuário
+  findInput.addEventListener('input', () => {
+      hideFeedback();
+      triggerSearch();
+  });
+  replaceInput.addEventListener('input', () => {
+      hideFeedback();
+      updatePreview();
+      updateButtonStates();
+  });
   
   // --- LÓGICA DOS EVENTOS DE UI ---
   textListContainer.addEventListener('input', (event) => {
@@ -436,4 +696,44 @@
     });
 
   }
+
+  findInput.addEventListener('input', triggerSearch);
+  replaceInput.addEventListener('input', () => {
+    updatePreview();
+    updateButtonStates();
+  });
+  
+  caseSensitiveToggle.onclick = () => {
+    isCaseSensitive = !isCaseSensitive; // Inverte o estado
+    caseSensitiveToggle.classList.toggle('active', isCaseSensitive); // Atualiza a UI
+    triggerSearch(); // Refaz a busca com a nova configuração
+  };
+
+  finderNext.onclick = () => { parent.postMessage({ pluginMessage: { type: 'navigate', direction: 'next' } }, '*'); };
+  finderPrev.onclick = () => { parent.postMessage({ pluginMessage: { type: 'navigate', direction: 'prev' } }, '*'); };
+
+  replaceSingleBtn.onclick = () => {
+    parent.postMessage({ 
+      pluginMessage: { 
+        type: 'replace-single',
+        findText: findInput.value,
+        replaceText: replaceInput.value,
+        isCaseSensitive: isCaseSensitive // Envia o estado
+      } 
+    }, '*');
+  };
+
+  replaceAllBtn.onclick = () => {
+    parent.postMessage({ 
+      pluginMessage: { 
+        type: 'replace-all',
+        findText: findInput.value,
+        replaceText: replaceInput.value,
+        isCaseSensitive: isCaseSensitive // Envia o estado
+      } 
+    }, '*');
+  };
+
+  // Inicialização
+  updateButtonStates();
 </script>

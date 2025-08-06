@@ -112,7 +112,7 @@ figma.ui.onmessage = async (msg) => {
         node.characters = change.newText;
       }
     }
-    figma.notify("texts atualizados!");
+    figma.notify("updated texts!");
   }
 
   if (msg.type === 'apply-frame-name-changes') {
@@ -122,7 +122,7 @@ figma.ui.onmessage = async (msg) => {
         node.name = change.newName;
       }
     }
-    figma.notify("Nomes dos frames atualizados!");
+    figma.notify("Updated frame names!");
   }
 
   if (msg.type === 'cancel') {
@@ -231,7 +231,7 @@ figma.ui.onmessage = async (msg) => {
 
     await Promise.all(undoPromises);
     
-    figma.notify(`${lastChangeSet.length} ${lastChangeSet.length > 1 ? 'alterações desfeitas' : 'alteração desfeita'}!`);
+    figma.notify(`${lastChangeSet.length} ${lastChangeSet.length > 1 ? 'changes undone' : 'change undone'}!`);
     
 
     lastChangeSet = [];

@@ -114,7 +114,7 @@
 
   .reset-icon {
     position: absolute;
-    right: 12px;
+    right: 40px;
     top: 50%;
     transform: translateY(-50%);
     width: 16px;
@@ -327,6 +327,7 @@
     opacity: 0.5;
     transition: opacity 0.2s, background-color 0.2s;
     border-radius: 4px;
+    margin-left: 16px;
   }
   #formatter-toggle:hover {
     opacity: 1;
@@ -482,6 +483,36 @@
   background-color: #5F5F5F;
 }
 
+.lock-icon svg {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  opacity: 0.5;
+  transition: opacity 0.1s;
+}
+
+.lock-icon:hover {
+  opacity: 1;
+}
+
+.lock-icon.active svg path {
+  opacity: 1;
+  color: #0284c7; /* Cor para indicar que está ativo */
+}
+
+.input-wrapper.locked input[type="text"] {
+  background-color: #f0f9ff; /* Fundo azul claro para indicar travado */
+  border-color: #0ea5e9; /* Borda azul para indicar travado */
+}
+
+.input-wrapper.locked .reset-icon {
+  display: none; /* Esconde o reset icon quando travado */
+}
+
 </style>
 
 <div class="plugin-wrapper">
@@ -492,12 +523,10 @@
       <div class="tab" id="tab-finder">Finder</div>
     </div>
 
-    <button id="formatter-toggle" title="Abrir/Fechar formatador">
+    <button id="formatter-toggle" title="Open/Close Formatter">
       <svg width="24" height="22" viewBox="0 0 24 22" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M21.4791 3.41667H18.2291M13.8958 1.25V5.58333M13.8958 3.41667H1.97913M6.31246 11H1.97913M10.6458 8.83333V13.1667M22.5625 11H10.6458M21.4791 18.5833H18.2291M13.8958 16.4167V20.75M13.8958 18.5833H1.97913" stroke="#2D2D2D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-
-    </button>
+      </svg></button>
   </div>
   </div>
 
@@ -505,7 +534,7 @@
     <div class="finder-title">Create Formatting Rule</div>
 
     <div class="input-wrapper">
-      <input type="text" id="format-rule-input" placeholder="{current_text}">
+      <input type="text" id="format-rule-input">
     </div>
 
     <div class="formatter-tokens">
@@ -617,6 +646,7 @@
   let currentOriginalNodeText = '';
   let searchResultsCount = 0;
   let isCaseSensitive = false;
+  let lockedNodeId = null; // Novo estado para o nodeId travado
 
   function hideFeedback() {
     feedbackContainer.classList.add('hidden');
@@ -639,7 +669,8 @@
       if (lastReceivedData) {
         renderContent(lastReceivedData);
       }
-      applyButton.disabled = true;
+      // O botão Apply agora pode ser ativado pela formatação
+      updateApplyButtonState(); 
     }
   }
 
@@ -654,78 +685,110 @@
     } else {
       renderFrameView(data.frameData);
     }
+    updateApplyButtonState(); // Atualiza o estado do botão Apply após renderizar
   }
 
   function renderTextView(textData) {
-    const frameIds = Object.keys(textData);
-    if (frameIds.length === 0) {
-      emptyState.querySelector('p:first-child').textContent = 'No text selected';
-      emptyState.classList.remove('hidden');
-      textListContainer.classList.add('hidden');
-      footer.classList.add('hidden');
-    } else {
-      emptyState.classList.add('hidden');
-      textListContainer.classList.remove('hidden');
-      footer.classList.remove('hidden');
-      textListContainer.innerHTML = '';
-      for (const frameId of frameIds) {
-        const frameData = textData[frameId];
-        const frameGroup = document.createElement('div');
-        frameGroup.className = 'frame-group';
-        const title = document.createElement('div');
-        title.className = 'frame-title';
-        title.textContent = frameData.frameName;
-        frameGroup.appendChild(title);
-        for (const textNode of frameData.textNodes) {
-          const wrapper = document.createElement('div');
-          wrapper.className = 'input-wrapper';
-          const input = document.createElement('input');
-          input.type = 'text';
-          input.value = textNode.characters;
-          input.dataset.nodeId = textNode.nodeId;
-          input.dataset.originalText = textNode.characters;
-          const resetIcon = document.createElement('img');
-          resetIcon.className = 'reset-icon';
-          resetIcon.src = "data:image/svg+xml,%3Csvg%20width='16'%20height='15'%20viewBox='0%200%2016%2015'%20fill='none'%20xmlns='http://www.w3.org/2000/svg'%3E%3Cpath%20d='M3.72225%201.5L1%203.75M1%203.75L3.72225%206.375M1%203.75H9.94219C12.6189%203.75%2014.892%205.8575%2014.9962%208.4375C15.1067%2011.1637%2012.7706%2013.5%209.94219%2013.5H3.33258'%20stroke='%235F5F5F'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'/%3E%3C/svg%3E";
-          wrapper.appendChild(input);
-          wrapper.appendChild(resetIcon);
-          frameGroup.appendChild(wrapper);
-        }
-        textListContainer.appendChild(frameGroup);
-      }
-    }
+    const frameIds = Object.keys(textData);
+    if (frameIds.length === 0) {
+      emptyState.querySelector('p:first-child').textContent = 'No text selected';
+      emptyState.classList.remove('hidden');
+      textListContainer.classList.add('hidden');
+      footer.classList.add('hidden');
+    } else {
+      emptyState.classList.add('hidden');
+      textListContainer.classList.remove('hidden');
+      footer.classList.remove('hidden');
+      textListContainer.innerHTML = '';
+      for (const frameId of frameIds) {
+        const frameData = textData[frameId];
+        const frameGroup = document.createElement('div');
+        frameGroup.className = 'frame-group';
+        const title = document.createElement('div');
+        title.className = 'frame-title';
+        title.textContent = frameData.frameName;
+        frameGroup.appendChild(title);
+        for (const textNode of frameData.textNodes) {
+          const wrapper = document.createElement('div');
+          wrapper.className = 'input-wrapper';
+          if (lockedNodeId === textNode.nodeId) {
+            wrapper.classList.add('locked');
+          }
+          const lockIcon = document.createElement('div');
+          lockIcon.className = 'lock-icon';
+          lockIcon.innerHTML = `
+            <svg width="20" height="22" viewBox="0 0 20 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M5 10V6C5 4.67392 5.52678 3.40215 6.46447 2.46447C7.40215 1.52678 8.67392 1 10 1C11.3261 1 12.5979 1.52678 13.5355 2.46447C14.4732 3.40215 15 4.67392 15 6V10M3 10H17C18.1046 10 19 10.8954 19 12V19C19 20.1046 18.1046 21 17 21H3C1.89543 21 1 20.1046 1 19V12C1 10.8954 1.89543 10 3 10Z"
+                stroke="#2D2D2D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          `;
+          lockIcon.dataset.nodeId = textNode.nodeId;
+          if (lockedNodeId === textNode.nodeId) {
+            lockIcon.classList.add('active');
+          }
+
+          const input = document.createElement('input');
+          input.type = 'text';
+          input.value = textNode.characters;
+          input.dataset.nodeId = textNode.nodeId;
+          input.dataset.originalText = textNode.characters;
+          const resetIcon = document.createElement('img');
+          resetIcon.className = 'reset-icon';
+          resetIcon.src = "data:image/svg+xml,%3Csvg%20width='16'%20height='15'%20viewBox='0%200%2016%2015'%20fill='none'%20xmlns='http://www.w3.org/2000/svg'%3E%3Cpath%20d='M3.72225%201.5L1%203.75M1%203.75L3.72225%206.375M1%203.75H9.94219C12.6189%203.75%2014.892%205.8575%2014.9962%208.4375C15.1067%2011.1637%2012.7706%2013.5%209.94219%2013.5H3.33258'%20stroke='%235F5F5F'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'/%3E%3C/svg%3E";
+          
+          wrapper.appendChild(lockIcon); // Adiciona o ícone de lock
+          wrapper.appendChild(input);
+          wrapper.appendChild(resetIcon);
+          frameGroup.appendChild(wrapper);
+        }
+        textListContainer.appendChild(frameGroup);
+      }
+    }
   }
 
   function renderFrameView(frameData) {
-    if (frameData.length === 0) {
-      emptyState.querySelector('p:first-child').textContent = 'No frames selected';
-      emptyState.classList.remove('hidden');
-      textListContainer.classList.add('hidden');
-      footer.classList.add('hidden');
-    } else {
-      emptyState.classList.add('hidden');
-      textListContainer.classList.remove('hidden');
-      footer.classList.remove('hidden');
-      textListContainer.innerHTML = '';
-      const frameGroup = document.createElement('div');
-      frameGroup.className = 'frame-group';
-      for (const frameNode of frameData) {
-        const wrapper = document.createElement('div');
-        wrapper.className = 'input-wrapper';
-        const input = document.createElement('input');
-        input.type = 'text';
-        input.value = frameNode.name;
-        input.dataset.nodeId = frameNode.nodeId;
-        input.dataset.originalText = frameNode.name;
-        const resetIcon = document.createElement('img');
-        resetIcon.className = 'reset-icon';
-        resetIcon.src = "data:image/svg+xml,%3Csvg%20width='16'%20height='15'%20viewBox='0%200%2016%2015'%20fill='none'%20xmlns='http://www.w3.org/2000/svg'%3E%3Cpath%20d='M3.72225%201.5L1%203.75M1%203.75L3.72225%206.375M1%203.75H9.94219C12.6189%203.75%2014.892%205.8575%2014.9962%208.4375C15.1067%2011.1637%2012.7706%2013.5%209.94219%2013.5H3.33258'%20stroke='%235F5F5F'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'/%3E%3C/svg%3E";
-        wrapper.appendChild(input);
-        wrapper.appendChild(resetIcon);
-        frameGroup.appendChild(wrapper);
-      }
-      textListContainer.appendChild(frameGroup);
-    }
+    if (frameData.length === 0) {
+      emptyState.querySelector('p:first-child').textContent = 'No frames selected';
+      emptyState.classList.remove('hidden');
+      textListContainer.classList.add('hidden');
+      footer.classList.add('hidden');
+    } else {
+      emptyState.classList.add('hidden');
+      textListContainer.classList.remove('hidden');
+      footer.classList.remove('hidden');
+      textListContainer.innerHTML = '';
+      const frameGroup = document.createElement('div');
+      frameGroup.className = 'frame-group';
+      for (const frameNode of frameData) {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'input-wrapper';
+        if (lockedNodeId === frameNode.nodeId) {
+          wrapper.classList.add('locked');
+        }
+        const lockIcon = document.createElement('img');
+        lockIcon.className = 'lock-icon';
+        lockIcon.src = "data:image/svg+xml,%3Csvg%20width='16'%20height='16'%20viewBox='0%200%2016%2016'%20fill='none'%20xmlns='http://www.w3.org/2000/svg'%3E%3Cpath%20d='M12.6667%207.33333H3.33333C2.59695%207.33333%202%207.93029%202%208.66667V13.3333C2%2014.0697%202.59695%2014.6667%203.33333%2014.6667H12.6667C13.403%2014.6667%2014%2014.0697%2014%2013.3333V8.66667C14%207.93029%2013.403%207.33333%2012.6667%207.33333Z'%20stroke='%235F5F5F'%20stroke-width='1.5'%20stroke-linecap='round'%20stroke-linejoin='round'/%3E%3Cpath%20d='M4.66667%207.33333V4.66667C4.66667%203.38696%205.18452%202.15362%206.09835%201.2398C7.01219%200.325975%208.24553%200.00012207%209.52524%200.00012207C10.805%200.00012207%2012.0383%200.325975%2012.9522%201.2398C13.866%202.15362%2014.3839%203.38696%2014.3839%204.66667V7.33333H4.66667Z'%20stroke='%235F5F5F'%20stroke-width='1.5'%20stroke-linecap='round'%20stroke-linejoin='round'/%3E%3C/svg%3E";
+        lockIcon.dataset.nodeId = frameNode.nodeId;
+        if (lockedNodeId === frameNode.nodeId) {
+          lockIcon.classList.add('active');
+        }
+
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.value = frameNode.name;
+        input.dataset.nodeId = frameNode.nodeId;
+        input.dataset.originalText = frameNode.name;
+        const resetIcon = document.createElement('img');
+        resetIcon.className = 'reset-icon';
+        resetIcon.src = "data:image/svg+xml,%3Csvg%20width='16'%20height='15'%20viewBox='0%200%2016%2015'%20fill='none'%20xmlns='http://www.w3.org/2000/svg'%3E%3Cpath%20d='M3.72225%201.5L1%203.75M1%203.75L3.72225%206.375M1%203.75H9.94219C12.6189%203.75%2014.892%205.8575%2014.9962%208.4375C15.1067%2011.1637%2012.7706%2013.5%209.94219%2013.5H3.33258'%20stroke='%235F5F5F'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'/%3E%3C/svg%3E";
+        
+        wrapper.appendChild(lockIcon); // Adiciona o ícone de lock
+        wrapper.appendChild(input);
+        wrapper.appendChild(resetIcon);
+        frameGroup.appendChild(wrapper);
+      }
+      textListContainer.appendChild(frameGroup);
+    }
   }
 
   function updatePreview() {
@@ -791,7 +854,11 @@
         case 'selectionChange':
             lastReceivedData = msg;
             if (currentMode !== 'finder') {
-                applyButton.disabled = true;
+                // Preserva o estado do lock ao mudar a seleção
+                const currentLockedNode = lockedNodeId ? document.querySelector(`[data-node-id="${lockedNodeId}"]`) : null;
+                if (!currentLockedNode || (currentMode === 'texts' && !msg.textData[Object.keys(msg.textData).find(frameId => msg.textData[frameId].textNodes.some(node => node.nodeId === lockedNodeId))]) || (currentMode === 'frames' && !msg.frameData.some(node => node.nodeId === lockedNodeId))) {
+                    lockedNodeId = null; // Limpa o lock se o nó não estiver mais selecionado
+                }
                 renderContent(lastReceivedData);
             }
             break;
@@ -846,11 +913,15 @@
       } else {
         input.value = prefix + token;
       }
+      updateApplyButtonState(); // Ativa o botão Apply ao adicionar um token
     }
   });
 
   clearFormatRuleBtn.addEventListener('click', () => {
     formatRuleInput.value = '';
+    activeFormatRule = ''; // Limpa a regra ativa
+    formatterToggle.classList.remove('active'); // Desativa a cor do ícone
+    updateApplyButtonState(); // Atualiza o estado do botão Apply
   });
 
   undoButton.onclick = () => {
@@ -867,7 +938,6 @@
       updateButtonStates();
   });
 
-  // Adicione esta nova lógica
   applyFormatRuleBtn.addEventListener('click', () => {
     activeFormatRule = formatRuleInput.value.trim();
 
@@ -878,36 +948,20 @@
     }
 
     formatterPanel.classList.add('hidden'); // Fecha o painel
-  });
-
-  // Modifique o listener de clique do clearFormatRuleBtn
-  clearFormatRuleBtn.addEventListener('click', () => {
-    formatRuleInput.value = '';
-    activeFormatRule = ''; // Limpa a regra ativa
-    formatterToggle.classList.remove('active'); // Desativa a cor do ícone
+    updateApplyButtonState(); // Ativa o botão Apply ao aplicar a regra
   });
   
   textListContainer.addEventListener('input', (event) => {
     if (event.target.tagName === 'INPUT') {
       const input = event.target;
       const resetIcon = input.nextElementSibling;
-      let hasChanges = false;
-
+      
       if (input.value !== input.dataset.originalText) {
         resetIcon.classList.add('visible');
       } else {
         resetIcon.classList.remove('visible');
       }
-      
-      const allInputs = textListContainer.querySelectorAll('input[type="text"]');
-      for (const i of allInputs) {
-          if (i.value !== i.dataset.originalText) {
-              hasChanges = true;
-              break;
-          }
-      }
-
-      applyButton.disabled = !hasChanges;
+      updateApplyButtonState(); // Atualiza o estado do botão Apply
     }
   });
 
@@ -920,6 +974,18 @@
       input.value = input.dataset.originalText;
       resetIcon.classList.remove('visible');
       input.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+
+    const lockIcon = event.target.closest('.lock-icon');
+    if (lockIcon) {
+      const nodeIdToLock = lockIcon.dataset.nodeId;
+      if (lockedNodeId === nodeIdToLock) {
+        lockedNodeId = null; // Desativa o lock
+      } else {
+        lockedNodeId = nodeIdToLock; // Ativa o lock
+      }
+      renderContent(lastReceivedData); // Re-renderiza para atualizar os estados visuais
+      updateApplyButtonState(); // Atualiza o estado do botão Apply
     }
   });
 
@@ -943,63 +1009,109 @@
     return result.trim();
   }
 
+  function updateApplyButtonState() {
+    let hasManualChanges = false;
+    const inputs = textListContainer.querySelectorAll('input[type="text"]');
+    for (const input of inputs) {
+      if (input.value !== input.dataset.originalText) {
+        hasManualChanges = true;
+        break;
+      }
+    }
+    // O botão Apply fica ativo se houver formatação ativa OU se houver mudanças manuais OU se houver um item travado
+    applyButton.disabled = !(activeFormatRule || hasManualChanges || lockedNodeId);
+  }
+
   applyButton.onclick = () => {
     const inputs = textListContainer.querySelectorAll('input[type="text"]');
     const changes = [];
     const formatRule = activeFormatRule;
+    let lockedTextContent = '';
 
-    if (formatRule) {
-      // --- MODO DE FORMATAÇÃO ---
-      inputs.forEach((input, index) => {
-        const originalText = input.dataset.originalText;
+    if (lockedNodeId) {
+      const lockedInput = document.querySelector(`input[data-node-id="${lockedNodeId}"]`);
+      if (lockedInput) {
+        lockedTextContent = lockedInput.value;
+      }
+    }
+
+    inputs.forEach((input, index) => {
+      const nodeId = input.dataset.nodeId;
+      const originalText = input.dataset.originalText;
+      let newText = input.value; // Começa com o valor atual do input (manual ou original)
+
+      if (lockedNodeId && nodeId !== lockedNodeId) {
+        // Se há um item travado e este não é o item travado, usa o conteúdo do item travado
+        newText = lockedTextContent;
+      } else if (formatRule) {
+        // Se há uma regra de formatação, aplica-a sobre o texto original
         const totalItems = inputs.length;
-        const newFormattedValue = applyFormatRule(formatRule, originalText, index, totalItems);
-
-        if (currentMode === 'texts') { /*[cite: 169]*/
-          changes.push({ nodeId: input.dataset.nodeId, newText: newFormattedValue });
+        const formattedText = applyFormatRule(formatRule, originalText, index, totalItems);
+        
+        // Se houver edição manual E formatação, a formatação é aplicada sobre o texto original,
+        // e a edição manual é considerada apenas se não houver formatação.
+        // Para aplicar ambas, precisamos de uma lógica mais complexa, por exemplo:
+        // Se o input foi editado manualmente, a edição manual tem prioridade,
+        // a menos que a formatação seja para "replicar" (como o lock).
+        // Para simplificar, vamos aplicar a formatação sobre o texto original,
+        // e se o usuário editou manualmente, a edição manual prevalece,
+        // a menos que o lock esteja ativo.
+        if (input.value !== originalText && !lockedNodeId) {
+            // Se houve edição manual e não há lock, a edição manual prevalece
+            newText = input.value;
         } else {
-          changes.push({ nodeId: input.dataset.nodeId, newName: newFormattedValue }); /*[cite: 169]*/
+            newText = formattedText;
         }
-      });
+      }
 
-    } else {
-      // --- MODO MANUAL (LÓGICA ORIGINAL) ---
-      inputs.forEach(input => {
-        if (input.value !== input.dataset.originalText) { /*[cite: 169]*/
-          if (currentMode === 'texts') {
-            changes.push({ nodeId: input.dataset.nodeId, newText: input.value }); /*[cite: 169]*/
-          } else {
-            changes.push({ nodeId: input.dataset.nodeId, newName: input.value }); /*[cite: 169]*/
-          }
+      // Adiciona a mudança apenas se o novo texto for diferente do original
+      if (newText !== originalText) {
+        if (currentMode === 'texts') {
+          changes.push({ nodeId: nodeId, newText: newText });
+        } else {
+          changes.push({ nodeId: nodeId, newName: newText });
         }
-      });
+      }
+    });
+
+    if (changes.length > 0) {
+      const messageType = currentMode === 'texts' ? 
+        'apply-changes' : 'apply-frame-name-changes';
+      parent.postMessage({ pluginMessage: { type: messageType, data: changes } }, '*');
+      
+      // Feedback visual para o Lock Text
+      if (lockedNodeId) {
+        figma.notify(`"${lockedTextContent}" replicado para os itens selecionados!`);
+      }
     }
 
-    if (changes.length > 0) { /*[cite: 171]*/
-      const messageType = currentMode === 'texts' ? /*[cite: 171]*/
-        'apply-changes' : 'apply-frame-name-changes'; /*[cite: 172]*/
-      parent.postMessage({ pluginMessage: { type: messageType, data: changes } }, '*'); /*[cite: 172]*/
-    }
-
-    applyButton.disabled = true; /*[cite: 173]*/
-    inputs.forEach(input => { /*[cite: 173]*/
-      // Atualiza o 'originalText' para o novo valor aplicado
+    // Atualiza o 'originalText' para o novo valor aplicado e remove o reset icon
+    inputs.forEach(input => {
       const change = changes.find(c => c.nodeId === input.dataset.nodeId);
       if (change) {
           const newValue = currentMode === 'texts' ? change.newText : change.newName;
           input.dataset.originalText = newValue;
           input.value = newValue;
+      } else if (lockedNodeId && input.dataset.nodeId !== lockedNodeId) {
+          // Se o item não foi alterado manualmente, mas foi afetado pelo lock
+          input.dataset.originalText = lockedTextContent;
+          input.value = lockedTextContent;
       }
 
-      const resetIcon = input.nextElementSibling; /*[cite: 173]*/
+      const resetIcon = input.nextElementSibling;
       if (resetIcon) {
-        resetIcon.classList.remove('visible'); /*[cite: 173]*/
+        resetIcon.classList.remove('visible');
       }
     });
 
-    // Esconde o painel após aplicar para dar um feedback visual
-    formatterPanel.classList.add('hidden');
-    formatterToggle.classList.remove('active');
+    // Esconde o painel de formatação e desativa o toggle se não houver regra ativa
+    if (!activeFormatRule) {
+      formatterPanel.classList.add('hidden');
+      formatterToggle.classList.remove('active');
+    }
+    
+    // Desativa o botão Apply após a aplicação
+    updateApplyButtonState();
   };
 
   findInput.addEventListener('input', triggerSearch);
@@ -1040,23 +1152,26 @@
   };
 
   tabFinder.addEventListener('click', () => {
-  footer.classList.remove('hidden');
-  finderActions.classList.remove('hidden');
-  applyButton.classList.add('hidden'); // Esconde o botão Apply na aba Finder
-});
+    footer.classList.remove('hidden');
+    finderActions.classList.remove('hidden');
+    applyButton.classList.add('hidden'); // Esconde o botão Apply na aba Finder
+  });
 
-// Também adicione o inverso nos outros tabs
   document.getElementById('tab-texts').addEventListener('click', () => {
     footer.classList.remove('hidden');
     finderActions.classList.add('hidden');
     applyButton.classList.remove('hidden');
+    updateApplyButtonState(); // Garante que o botão Apply seja atualizado ao mudar de aba
   });
 
   document.getElementById('tab-frames').addEventListener('click', () => {
     footer.classList.remove('hidden');
     finderActions.classList.add('hidden');
     applyButton.classList.remove('hidden');
+    updateApplyButtonState(); // Garante que o botão Apply seja atualizado ao mudar de aba
   });
 
+  // Inicializa o estado do botão Apply
   updateButtonStates();
+  updateApplyButtonState();
 </script>

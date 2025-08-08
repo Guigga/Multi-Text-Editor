@@ -425,7 +425,7 @@
 /* --- Estilos para o Painel de Formatação --- */
 .formatter-panel {
   position: absolute; /*[cite: 104]*/
-  top: 55px; /*[cite: 104]*/
+  top: 55px; /* Abaixo da barra de abas */
   right: 16px; /*[cite: 105]*/
   left: 16px; /*[cite: 105]*/
   background-color: #FFFFFF; /*[cite: 105]*/
@@ -509,8 +509,10 @@
   border-color: #0ea5e9; /* Borda azul para indicar travado */
 }
 
-.input-wrapper.locked .reset-icon {
-  display: none; /* Esconde o reset icon quando travado */
+input[type="text"]:disabled {
+  background-color: #F5F5F5;
+  color: #AEAEAE;
+  cursor: not-allowed;
 }
 
 </style>
@@ -534,7 +536,7 @@
     <div class="finder-title">Create Formatting Rule</div>
 
     <div class="input-wrapper">
-      <input type="text" id="format-rule-input">
+      <input type="text" id="format-rule-input" placeholder="Create your role">
     </div>
 
     <div class="formatter-tokens">
@@ -587,11 +589,13 @@
         </div>
       </div>
 
-      <div id="feedback-container" class="feedback-container hidden">
+    </div>
+
+    <div id="feedback-container" class="feedback-container hidden">
             <span id="feedback-message"></span>
             <button id="undo-button">Undo</button>
-        </div>
     </div>
+
   </div>
 
   <div class="footer hidden" id="footer">
@@ -640,6 +644,7 @@
 
   const applyFormatRuleBtn = document.getElementById('apply-format-rule');
 
+
   let activeFormatRule = '';
   let currentMode = 'texts';
   let lastReceivedData = null;
@@ -651,6 +656,20 @@
   function hideFeedback() {
     feedbackContainer.classList.add('hidden');
   }
+
+  const svgIconLocked = `
+    <svg width="20" height="22" viewBox="0 0 20 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M5 10V6C5 4.67392 5.52678 3.40215 6.46447 2.46447C7.40215 1.52678 8.67392 1 10 1C11.3261 1 12.5979 1.52678 13.5355 2.46447C14.4732 3.40215 15 4.67392 15 6V10M3 10H17C18.1046 10 19 10.8954 19 12V19C19 20.1046 18.1046 21 17 21H3C1.89543 21 1 20.1046 1 19V12C1 10.8954 1.89543 10 3 10Z"
+        stroke="#2D2D2D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  `;
+
+  const svgIconUnlocked = `
+    <svg width="20" height="22" viewBox="0 0 20 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M5 10.005V6.00504C4.99875 4.76508 5.45828 3.5689 6.28937 2.6487C7.12047 1.7285 8.26383 1.14994 9.4975 1.02533C10.7312 0.900712 11.9671 1.23894 12.9655 1.97435C13.9638 2.70976 14.6533 3.78988 14.9 5.00504M3 10.005H17C18.1046 10.005 19 10.9005 19 12.005V19.005C19 20.1096 18.1046 21.005 17 21.005H3C1.89543 21.005 1 20.1096 1 19.005V12.005C1 10.9005 1.89543 10.005 3 10.005Z" 
+        stroke="#2D2D2D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  `;
 
   // --- LÓGICA DE TROCA DE ABAS ---
   function setMode(mode) {
@@ -711,32 +730,36 @@
         for (const textNode of frameData.textNodes) {
           const wrapper = document.createElement('div');
           wrapper.className = 'input-wrapper';
-          if (lockedNodeId === textNode.nodeId) {
+          const isLockedNode = lockedNodeId === textNode.nodeId;
+          if (isLockedNode) {
             wrapper.classList.add('locked');
           }
           const lockIcon = document.createElement('div');
           lockIcon.className = 'lock-icon';
-          lockIcon.innerHTML = `
-            <svg width="20" height="22" viewBox="0 0 20 22" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M5 10V6C5 4.67392 5.52678 3.40215 6.46447 2.46447C7.40215 1.52678 8.67392 1 10 1C11.3261 1 12.5979 1.52678 13.5355 2.46447C14.4732 3.40215 15 4.67392 15 6V10M3 10H17C18.1046 10 19 10.8954 19 12V19C19 20.1046 18.1046 21 17 21H3C1.89543 21 1 20.1046 1 19V12C1 10.8954 1.89543 10 3 10Z"
-                stroke="#2D2D2D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          `;
-          lockIcon.dataset.nodeId = textNode.nodeId;
-          if (lockedNodeId === textNode.nodeId) {
+          
+          // --- MUDANÇA AQUI ---
+          lockIcon.innerHTML = isLockedNode ? svgIconLocked : svgIconUnlocked;
+          if (isLockedNode) {
             lockIcon.classList.add('active');
           }
+          // --- FIM DA MUDANÇA ---
 
+          lockIcon.dataset.nodeId = textNode.nodeId;
           const input = document.createElement('input');
           input.type = 'text';
           input.value = textNode.characters;
           input.dataset.nodeId = textNode.nodeId;
           input.dataset.originalText = textNode.characters;
+
+          if (lockedNodeId && !isLockedNode) {
+              input.disabled = true;
+          }
+          
           const resetIcon = document.createElement('img');
           resetIcon.className = 'reset-icon';
           resetIcon.src = "data:image/svg+xml,%3Csvg%20width='16'%20height='15'%20viewBox='0%200%2016%2015'%20fill='none'%20xmlns='http://www.w3.org/2000/svg'%3E%3Cpath%20d='M3.72225%201.5L1%203.75M1%203.75L3.72225%206.375M1%203.75H9.94219C12.6189%203.75%2014.892%205.8575%2014.9962%208.4375C15.1067%2011.1637%2012.7706%2013.5%209.94219%2013.5H3.33258'%20stroke='%235F5F5F'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'/%3E%3C/svg%3E";
           
-          wrapper.appendChild(lockIcon); // Adiciona o ícone de lock
+          wrapper.appendChild(lockIcon);
           wrapper.appendChild(input);
           wrapper.appendChild(resetIcon);
           frameGroup.appendChild(wrapper);
@@ -762,27 +785,36 @@
       for (const frameNode of frameData) {
         const wrapper = document.createElement('div');
         wrapper.className = 'input-wrapper';
-        if (lockedNodeId === frameNode.nodeId) {
+        const isLockedNode = lockedNodeId === frameNode.nodeId;
+        if (isLockedNode) {
           wrapper.classList.add('locked');
         }
-        const lockIcon = document.createElement('img');
+        const lockIcon = document.createElement('div');
         lockIcon.className = 'lock-icon';
-        lockIcon.src = "data:image/svg+xml,%3Csvg%20width='16'%20height='16'%20viewBox='0%200%2016%2016'%20fill='none'%20xmlns='http://www.w3.org/2000/svg'%3E%3Cpath%20d='M12.6667%207.33333H3.33333C2.59695%207.33333%202%207.93029%202%208.66667V13.3333C2%2014.0697%202.59695%2014.6667%203.33333%2014.6667H12.6667C13.403%2014.6667%2014%2014.0697%2014%2013.3333V8.66667C14%207.93029%2013.403%207.33333%2012.6667%207.33333Z'%20stroke='%235F5F5F'%20stroke-width='1.5'%20stroke-linecap='round'%20stroke-linejoin='round'/%3E%3Cpath%20d='M4.66667%207.33333V4.66667C4.66667%203.38696%205.18452%202.15362%206.09835%201.2398C7.01219%200.325975%208.24553%200.00012207%209.52524%200.00012207C10.805%200.00012207%2012.0383%200.325975%2012.9522%201.2398C13.866%202.15362%2014.3839%203.38696%2014.3839%204.66667V7.33333H4.66667Z'%20stroke='%235F5F5F'%20stroke-width='1.5'%20stroke-linecap='round'%20stroke-linejoin='round'/%3E%3C/svg%3E";
-        lockIcon.dataset.nodeId = frameNode.nodeId;
-        if (lockedNodeId === frameNode.nodeId) {
-          lockIcon.classList.add('active');
-        }
 
+        // --- MUDANÇA AQUI ---
+        lockIcon.innerHTML = isLockedNode ? svgIconLocked : svgIconUnlocked;
+        if (isLockedNode) {
+            lockIcon.classList.add('active');
+        }
+        // --- FIM DA MUDANÇA ---
+        
+        lockIcon.dataset.nodeId = frameNode.nodeId;
         const input = document.createElement('input');
         input.type = 'text';
         input.value = frameNode.name;
         input.dataset.nodeId = frameNode.nodeId;
         input.dataset.originalText = frameNode.name;
+
+        if (lockedNodeId && !isLockedNode) {
+            input.disabled = true;
+        }
+        
         const resetIcon = document.createElement('img');
         resetIcon.className = 'reset-icon';
         resetIcon.src = "data:image/svg+xml,%3Csvg%20width='16'%20height='15'%20viewBox='0%200%2016%2015'%20fill='none'%20xmlns='http://www.w3.org/2000/svg'%3E%3Cpath%20d='M3.72225%201.5L1%203.75M1%203.75L3.72225%206.375M1%203.75H9.94219C12.6189%203.75%2014.892%205.8575%2014.9962%208.4375C15.1067%2011.1637%2012.7706%2013.5%209.94219%2013.5H3.33258'%20stroke='%235F5F5F'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'/%3E%3C/svg%3E";
         
-        wrapper.appendChild(lockIcon); // Adiciona o ícone de lock
+        wrapper.appendChild(lockIcon);
         wrapper.appendChild(input);
         wrapper.appendChild(resetIcon);
         frameGroup.appendChild(wrapper);
@@ -878,6 +910,11 @@
                 updateFinderUI(msg.updatedNode.index, msg.updatedNode.count, msg.updatedNode.nodeText);
             }
             break;
+
+        case 'apply-success':
+            feedbackMessage.textContent = `${msg.count} ${msg.count > 1 ? 'items updated' : 'item updated'}.`;
+            feedbackContainer.classList.remove('hidden');
+            break;
             
         case 'all-replace-success':
             resetFinderUI();
@@ -965,28 +1002,149 @@
     }
   });
 
-  textListContainer.addEventListener('click', (event) => {
-    const resetIcon = event.target.closest('.reset-icon');
-    if (resetIcon) {
-      const wrapper = resetIcon.parentElement;
-      const input = wrapper.querySelector('input');
-      
-      input.value = input.dataset.originalText;
-      resetIcon.classList.remove('visible');
-      input.dispatchEvent(new Event('input', { bubbles: true }));
+  applyButton.onclick = () => {
+    const inputs = textListContainer.querySelectorAll('input[type="text"]');
+    const changes = [];
+    const formatRule = activeFormatRule;
+    let lockedTextContent = '';
+
+    if (lockedNodeId) {
+      const lockedInput = document.querySelector(`input[data-node-id="${lockedNodeId}"]`);
+      if (lockedInput) {
+        lockedTextContent = lockedInput.value;
+      }
     }
 
-    const lockIcon = event.target.closest('.lock-icon');
-    if (lockIcon) {
-      const nodeIdToLock = lockIcon.dataset.nodeId;
-      if (lockedNodeId === nodeIdToLock) {
-        lockedNodeId = null; // Desativa o lock
-      } else {
-        lockedNodeId = nodeIdToLock; // Ativa o lock
+    inputs.forEach((input, index) => {
+      const nodeId = input.dataset.nodeId;
+      const originalText = input.dataset.originalText;
+      let newText = input.value;
+
+      if (lockedNodeId && nodeId !== lockedNodeId) {
+        newText = lockedTextContent;
+      } else if (formatRule) {
+        const totalItems = inputs.length;
+        const formattedText = applyFormatRule(formatRule, originalText, index, totalItems);
+        if (input.value !== originalText && !lockedNodeId) {
+            newText = input.value;
+        } else {
+            newText = formattedText;
+        }
       }
-      renderContent(lastReceivedData); // Re-renderiza para atualizar os estados visuais
-      updateApplyButtonState(); // Atualiza o estado do botão Apply
+
+      if (newText !== originalText) {
+        if (currentMode === 'texts') {
+          changes.push({ nodeId: nodeId, newText: newText });
+        } else {
+          changes.push({ nodeId: nodeId, newName: newText });
+        }
+      }
+    });
+
+    if (changes.length > 0) {
+      const messageType = currentMode === 'texts' ? 'apply-changes' : 'apply-frame-name-changes';
+      parent.postMessage({ pluginMessage: { type: messageType, data: changes } }, '*');
     }
+    
+    // --- INÍCIO DA CORREÇÃO 2 ---
+    // Após aplicar, atualize a "fonte da verdade" (lastReceivedData) e a UI.
+    if (lastReceivedData) {
+        // Primeiro, aplicamos as alterações que foram enviadas ao Figma
+        changes.forEach(change => {
+            const newValue = currentMode === 'texts' ? change.newText : change.newName;
+            if (currentMode === 'texts') {
+                for (const frameId in lastReceivedData.textData) {
+                    const nodeInfo = lastReceivedData.textData[frameId].textNodes.find(n => n.nodeId === change.nodeId);
+                    if (nodeInfo) nodeInfo.characters = newValue;
+                }
+            } else {
+                const nodeInfo = lastReceivedData.frameData.find(n => n.nodeId === change.nodeId);
+                if (nodeInfo) nodeInfo.name = newValue;
+            }
+        });
+
+        // Se o lock estava ativo, precisamos garantir que o item que serviu de fonte (o próprio item lockado)
+        // também tenha seu 'originalText' atualizado em `lastReceivedData`
+        if(lockedNodeId){
+            const lockedItemChange = changes.find(c => c.nodeId === lockedNodeId);
+            if(!lockedItemChange) { // Caso o próprio item lockado não tenha mudado, forçamos a atualização
+                 if (currentMode === 'texts') {
+                    for (const frameId in lastReceivedData.textData) {
+                        const nodeInfo = lastReceivedData.textData[frameId].textNodes.find(n => n.nodeId === lockedNodeId);
+                        if (nodeInfo) nodeInfo.characters = lockedTextContent;
+                    }
+                } else {
+                    const nodeInfo = lastReceivedData.frameData.find(n => n.nodeId === lockedNodeId);
+                    if (nodeInfo) nodeInfo.name = lockedTextContent;
+                }
+            }
+        }
+    }
+    
+    // Como a ação foi concluída, podemos limpar o estado de lock
+    lockedNodeId = null;
+
+    // Agora, re-renderizamos toda a UI com os dados corretos e atualizados
+    renderContent(lastReceivedData);
+    // --- FIM DA CORREÇÃO 2 ---
+
+    if (!activeFormatRule) {
+      formatterPanel.classList.add('hidden');
+      formatterToggle.classList.remove('active');
+    }
+    
+    updateApplyButtonState();
+  };
+
+  textListContainer.addEventListener('click', (event) => {
+      const resetIcon = event.target.closest('.reset-icon');
+      if (resetIcon) {
+        const wrapper = resetIcon.parentElement;
+        const input = wrapper.querySelector('input');
+        
+        input.value = input.dataset.originalText;
+        resetIcon.classList.remove('visible');
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+
+      const lockIcon = event.target.closest('.lock-icon');
+      if (lockIcon) {
+        const nodeIdToLock = lockIcon.dataset.nodeId;
+        
+        // --- INÍCIO DA CORREÇÃO 1 ---
+        // Antes de qualquer coisa, vamos capturar o valor atual do input que está sendo "lockado"
+        const inputElement = lockIcon.parentElement.querySelector('input');
+        const currentInputValue = inputElement.value;
+
+        // Agora, atualizamos nossa "fonte da verdade" (lastReceivedData) com este valor.
+        // Assim, a re-renderização não perderá a edição manual.
+        if (lastReceivedData) {
+          if (currentMode === 'texts') {
+              for (const frameId in lastReceivedData.textData) {
+                  const textNodeInfo = lastReceivedData.textData[frameId].textNodes.find(n => n.nodeId === nodeIdToLock);
+                  if (textNodeInfo) {
+                      textNodeInfo.characters = currentInputValue;
+                      break; 
+                  }
+              }
+          } else { // modo 'frames'
+              const frameNodeInfo = lastReceivedData.frameData.find(n => n.nodeId === nodeIdToLock);
+              if (frameNodeInfo) {
+                  frameNodeInfo.name = currentInputValue;
+              }
+          }
+        }
+        // --- FIM DA CORREÇÃO 1 ---
+
+        if (lockedNodeId === nodeIdToLock) {
+          lockedNodeId = null; // Desativa o lock
+        } else {
+          lockedNodeId = nodeIdToLock; // Ativa o lock
+        }
+        
+        renderContent(lastReceivedData); // Agora, re-renderiza com os dados já atualizados
+        updateApplyButtonState(); 
+      }
   });
 
   function applyFormatRule(rule, originalText, index, totalItems) {
@@ -1022,97 +1180,7 @@
     applyButton.disabled = !(activeFormatRule || hasManualChanges || lockedNodeId);
   }
 
-  applyButton.onclick = () => {
-    const inputs = textListContainer.querySelectorAll('input[type="text"]');
-    const changes = [];
-    const formatRule = activeFormatRule;
-    let lockedTextContent = '';
-
-    if (lockedNodeId) {
-      const lockedInput = document.querySelector(`input[data-node-id="${lockedNodeId}"]`);
-      if (lockedInput) {
-        lockedTextContent = lockedInput.value;
-      }
-    }
-
-    inputs.forEach((input, index) => {
-      const nodeId = input.dataset.nodeId;
-      const originalText = input.dataset.originalText;
-      let newText = input.value; // Começa com o valor atual do input (manual ou original)
-
-      if (lockedNodeId && nodeId !== lockedNodeId) {
-        // Se há um item travado e este não é o item travado, usa o conteúdo do item travado
-        newText = lockedTextContent;
-      } else if (formatRule) {
-        // Se há uma regra de formatação, aplica-a sobre o texto original
-        const totalItems = inputs.length;
-        const formattedText = applyFormatRule(formatRule, originalText, index, totalItems);
-        
-        // Se houver edição manual E formatação, a formatação é aplicada sobre o texto original,
-        // e a edição manual é considerada apenas se não houver formatação.
-        // Para aplicar ambas, precisamos de uma lógica mais complexa, por exemplo:
-        // Se o input foi editado manualmente, a edição manual tem prioridade,
-        // a menos que a formatação seja para "replicar" (como o lock).
-        // Para simplificar, vamos aplicar a formatação sobre o texto original,
-        // e se o usuário editou manualmente, a edição manual prevalece,
-        // a menos que o lock esteja ativo.
-        if (input.value !== originalText && !lockedNodeId) {
-            // Se houve edição manual e não há lock, a edição manual prevalece
-            newText = input.value;
-        } else {
-            newText = formattedText;
-        }
-      }
-
-      // Adiciona a mudança apenas se o novo texto for diferente do original
-      if (newText !== originalText) {
-        if (currentMode === 'texts') {
-          changes.push({ nodeId: nodeId, newText: newText });
-        } else {
-          changes.push({ nodeId: nodeId, newName: newText });
-        }
-      }
-    });
-
-    if (changes.length > 0) {
-      const messageType = currentMode === 'texts' ? 
-        'apply-changes' : 'apply-frame-name-changes';
-      parent.postMessage({ pluginMessage: { type: messageType, data: changes } }, '*');
-      
-      // Feedback visual para o Lock Text
-      if (lockedNodeId) {
-        figma.notify(`"${lockedTextContent}" replicado para os itens selecionados!`);
-      }
-    }
-
-    // Atualiza o 'originalText' para o novo valor aplicado e remove o reset icon
-    inputs.forEach(input => {
-      const change = changes.find(c => c.nodeId === input.dataset.nodeId);
-      if (change) {
-          const newValue = currentMode === 'texts' ? change.newText : change.newName;
-          input.dataset.originalText = newValue;
-          input.value = newValue;
-      } else if (lockedNodeId && input.dataset.nodeId !== lockedNodeId) {
-          // Se o item não foi alterado manualmente, mas foi afetado pelo lock
-          input.dataset.originalText = lockedTextContent;
-          input.value = lockedTextContent;
-      }
-
-      const resetIcon = input.nextElementSibling;
-      if (resetIcon) {
-        resetIcon.classList.remove('visible');
-      }
-    });
-
-    // Esconde o painel de formatação e desativa o toggle se não houver regra ativa
-    if (!activeFormatRule) {
-      formatterPanel.classList.add('hidden');
-      formatterToggle.classList.remove('active');
-    }
-    
-    // Desativa o botão Apply após a aplicação
-    updateApplyButtonState();
-  };
+  
 
   findInput.addEventListener('input', triggerSearch);
   replaceInput.addEventListener('input', () => {

@@ -104,6 +104,16 @@ function navigateAndNotify(newIndex: number, selectNode: boolean = false) {
 
 figma.ui.onmessage = async (msg) => {
   if (msg.type === 'apply-changes') {
+
+    lastChangeSet = []; // Limpa o histórico de undo anterior
+    const undoPromises = msg.data.map(async (change) => {
+        const node = await figma.getNodeByIdAsync(change.nodeId);
+        if (node && node.type === 'TEXT') {
+            lastChangeSet.push({ nodeId: node.id, originalCharacters: node.characters });
+        }
+    });
+    await Promise.all(undoPromises);
+
     for (const change of msg.data) {
       const node = await figma.getNodeByIdAsync(change.nodeId);
 
@@ -113,9 +123,18 @@ figma.ui.onmessage = async (msg) => {
       }
     }
     figma.notify("updated texts!");
+    figma.ui.postMessage({ type: 'apply-success', count: msg.data.length });
   }
 
   if (msg.type === 'apply-frame-name-changes') {
+    lastChangeSet = []; // Limpa o histórico de undo anterior
+    const undoPromises = msg.data.map(async (change) => {
+        const node = await figma.getNodeByIdAsync(change.nodeId);
+        if (node && node.type === 'FRAME') {
+            lastChangeSet.push({ nodeId: node.id, originalCharacters: node.name });
+        }
+    });
+
     for (const change of msg.data) {
       const node = await figma.getNodeByIdAsync(change.nodeId);
       if (node && node.type === 'FRAME') {
@@ -123,6 +142,7 @@ figma.ui.onmessage = async (msg) => {
       }
     }
     figma.notify("Updated frame names!");
+    figma.ui.postMessage({ type: 'apply-success', count: msg.data.length });
   }
 
   if (msg.type === 'cancel') {
@@ -226,16 +246,24 @@ figma.ui.onmessage = async (msg) => {
       if (node && node.type === 'TEXT') {
         await figma.loadFontAsync(node.fontName as FontName);
         node.characters = change.originalCharacters;
+      } else if (node && node.type === 'FRAME') {
+        node.name = change.originalCharacters;
       }
     });
 
     await Promise.all(undoPromises);
     
-    figma.notify(`${lastChangeSet.length} ${lastChangeSet.length > 1 ? 'changes undone' : 'change undone'}!`);
+    figma.notify(`${lastChangeSet.length} ${lastChangeSet.length > 1 ? 'changes undone' : 'change undone'}!`); 
     
-
     lastChangeSet = [];
 
+    // --- PONTO CRÍTICO DA CORREÇÃO ---
+    // Esta função busca os dados mais recentes do Figma e os envia para a UI.
+    // Isso força a UI a se renderizar com o estado correto após o "undo".
+    processSelection();
+
+    // Opcional: Notifica a UI que o undo foi concluído para, por exemplo, esconder um loader.
     figma.ui.postMessage({ type: 'undo-complete' });
   }
+
 };

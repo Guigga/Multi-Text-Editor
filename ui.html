@@ -1,5 +1,3 @@
-<!-- ui.html -->
-<!-- Reescrito e simplificado: mantém todas as funcionalidades, melhora estabilidade e clareza -->
 <!doctype html>
 <html>
 <head>
@@ -21,7 +19,8 @@
   .tab { cursor:pointer; font-size:14px; color:#AEAEAE; padding:6px 8px; border-radius:6px; }
   .tab.active { color:#2D2D2D; font-weight:600; background:transparent; }
   #formatter-toggle { background:none; border:none; cursor:pointer; padding:6px; border-radius:6px; opacity:0.6; }
-  #formatter-toggle.active { background:#eaf6ff; opacity:1; }
+  #formatter-toggle.active { background: #2D2D2D; opacity:1; }
+  #formatter-toggle.active svg path { stroke: #fff;}
   .content-area { padding:12px; overflow:auto; flex:1; }
   .container { text-align:center; color:#5F5F5F; padding-top:36px; }
   .frame-group { margin-bottom:14px; }
@@ -130,7 +129,7 @@
 
   <div class="footer hidden" id="footer">
     <div class="creator">Created by: Guigga</div>
-    <div id="finder-actions" class="hidden";>
+    <div id="finder-actions" class="hidden">
       <button id="replace-single" disabled style="background:#fff; border:1px solid #AEAEAE; color:#2D2D2D;">Replace</button>
       <button id="replace-all" disabled style="background:#2D2D2D; color:#fff;">Replace All</button>
     </div>
@@ -193,7 +192,13 @@
     const isFinder = mode === 'finder';
     finderContainer.classList.toggle('hidden', !isFinder);
     textListContainer.classList.toggle('hidden', isFinder);
-    footer.classList.remove('hidden');
+    
+    // FIX: se estiver no Finder, escondemos o emptyState
+    if (isFinder) {
+      emptyState.classList.add('hidden');
+    }
+
+    footer.classList.remove('hidden'); // footer sempre visível
     finderActions.classList.toggle('hidden', !isFinder);
     applyBtn.classList.toggle('hidden', isFinder);
 
@@ -205,7 +210,6 @@
   tabFrames.onclick = () => setMode('frames');
   tabFinder.onclick = () => setMode('finder');
 
-  // render methods
   function renderContent(data) {
     lastReceivedData = data;
     if (currentMode === 'texts') {
@@ -333,14 +337,12 @@
   window.onmessage = (evt) => {
     const msg = evt.data.pluginMessage;
     if (!msg) return;
-    // hide feedback except for replace-success
     if (msg.type !== 'replace-success' && msg.type !== 'apply-success') {
       feedbackContainer.classList.add('hidden');
     }
 
     switch (msg.type) {
       case 'selectionChange':
-        // preserva lock apenas se o nó ainda existir na nova seleção
         if (lockedNodeId) {
           const stillExistsInText = msg.textData && Object.keys(msg.textData).some(frameId => msg.textData[frameId].textNodes.some(n => n.nodeId === lockedNodeId));
           const stillExistsInFrames = msg.frameData && msg.frameData.some(n => n.nodeId === lockedNodeId);
@@ -362,7 +364,6 @@
         feedbackMessage.textContent = `${msg.count} ${msg.count > 1 ? 'replaced items' : 'replaced item'}.`;
         feedbackContainer.classList.remove('hidden');
         if (msg.allReplaced) {
-          // limpa finder UI
           findInput.value = '';
           replaceInput.value = '';
           updateFinderUI(-1, 0, '');
@@ -378,7 +379,6 @@
 
       case 'undo-complete':
         feedbackContainer.classList.add('hidden');
-        // re-trigger search so preview updates
         postToPlugin({ type: 'find-text', query: findInput.value, isCaseSensitive: isCaseSensitive });
         break;
 
@@ -388,8 +388,6 @@
     }
   };
 
-  // interactions
-  // find input
   findInput.addEventListener('input', () => {
     postToPlugin({ type: 'find-text', query: findInput.value, isCaseSensitive: isCaseSensitive });
   });
@@ -418,15 +416,24 @@
     return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   }
 
-  // undo
+
   undoButton.addEventListener('click', () => {
     postToPlugin({ type: 'undo-last-change' });
   });
 
-  // formatter toggle
   formatterToggle.addEventListener('click', () => {
-    formatterPanel.classList.toggle('hidden');
-    formatterToggle.classList.toggle('active', !formatterPanel.classList.contains('hidden'));
+    const isHidden = formatterPanel.classList.toggle('hidden');
+    if (isHidden) {
+      if (activeFormatRule) {
+        formatterToggle.classList.add('active');
+      } else {
+        formatterToggle.classList.remove('active');
+      }
+    } else {
+      if (activeFormatRule) {
+        formatRuleInput.value = activeFormatRule;
+      }
+    }
   });
   formatterTokens.forEach(token => {
     token.addEventListener('click', () => {
@@ -468,13 +475,9 @@
       if (lockedNodeId && nodeId !== lockedNodeId) {
         newText = lockedTextContent;
       } else if (formatRule) {
-        const total = inputs.length;
-        const formatted = applyFormatRule(formatRule, original, idx, total);
-        if (input.value !== original && !lockedNodeId) {
-          newText = input.value;
-        } else {
-          newText = formatted;
-        }
+        const total = inputs.length; 
+        const baseText = input.value;
+        newText = applyFormatRule(formatRule, baseText, idx, total);
       }
 
       if (newText !== original) {
@@ -525,7 +528,6 @@
     }
   });
 
-  // Delegation for reset and lock clicks and input edits
   textListContainer.addEventListener('click', (event) => {
     const reset = event.target.closest('.reset-icon');
     if (reset) {
@@ -544,7 +546,6 @@
       const input = lock.parentElement.querySelector('input');
       const currentValue = input.value;
 
-      // atualiza lastReceivedData imediatamente para preservar edição
       if (lastReceivedData) {
         if (currentMode === 'texts') {
           for (const frameId in lastReceivedData.textData) {
@@ -565,7 +566,6 @@
     }
   });
 
-  // handle input changes visibility of reset
   textListContainer.addEventListener('input', (event) => {
     const input = event.target;
     if (input && input.tagName === 'INPUT') {
@@ -595,7 +595,6 @@
   document.addEventListener('keydown', (e) => {
     if (currentMode === 'finder') return;
 
-    // Se for Enter e não estiver em textarea
     if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
       e.preventDefault();
       if (!applyBtn.disabled) {

@@ -1,5 +1,5 @@
 {
-  "name": "Muti-Text-Editor",
+  "name": "Multi-Text-Editor",
   "version": "1.0.0",
   "description": "Your Figma Plugin",
   "main": "code.js",
@@ -9,8 +9,8 @@
     "lint:fix": "eslint --ext .ts,.tsx --ignore-pattern node_modules --fix .",
     "watch": "npm run build -- --watch"
   },
-  "author": "",
-  "license": "",
+  "author": "Guigga",
+  "license": "MIT",
   "devDependencies": {
     "@figma/eslint-plugin-figma-plugins": "*",
     "@figma/plugin-typings": "^1.116.0",

@@ -32,7 +32,7 @@
   .lock-icon.active { color:#0284c7; opacity:1; }
   input[type="text"] { flex:1; padding:10px 12px; border:1px solid #AEAEAE; border-radius:8px; background:#fff; font-size:14px; color:#2D2D2D; }
   input[type="text"]:disabled { background:#F5F5F5; color:#AEAEAE; cursor:not-allowed; }
-  .reset-icon { width:18px; height:18px; cursor:pointer; opacity:0.7; visibility:hidden; }
+  .reset-icon { width:18px; height:18px; cursor:pointer; opacity:0.7; visibility:hidden; fill: none;}
   .reset-icon.visible { visibility:visible; opacity:1; }
   .footer { padding:12px 16px; background:#fff; border-top:0.5px solid #AEAEAE; display:flex; justify-content: space-between; gap:8px; flex-shrink:0; }
   .footer .creator {font-size: 12px; color: #6f7687;user-select: none; padding-top:18px; }
@@ -52,10 +52,17 @@
   .token { background:#e9e9e9; padding:6px 8px; border-radius:6px; cursor:pointer; font-weight:500; }
   .kbd { background:#F5F5F5; border:1px solid #CCC; border-radius:4px; padding:2px 6px; font-family:monospace; font-size:12px; }
   #finder-actions {display: flex; gap: 8px;}
+  .loading-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255, 255, 255, 0.8); z-index: 100; display: flex; align-items: center; justify-content: center; text-align: center; color: #2D2D2D; font-size: 14px; backdrop-filter: blur(2px); }
+  #case-sensitive-toggle { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); padding: 6px 8px; border-radius: 6px;   border: 1px solid transparent; background: #fff; cursor: pointer; }
+  #case-sensitive-toggle.active { background: #e0f2fe; border-color: #0ea5e9; }
 </style>
 </head>
 <body>
 <div class="plugin-wrapper">
+  <div id="loading-overlay" class="loading-overlay hidden">
+    <p id="loading-message">Processing...</p>
+  </div>
+
   <div class="tabs-container">
     <div class="tabs-wrapper">
       <div class="tabs">
@@ -105,7 +112,7 @@
         </div>
         <div style="position:relative;">
           <input id="find-input" type="text" placeholder="What are you looking for?" style="width:100%; padding:10px 48px 10px 12px; border-radius:8px; border:1px solid #AEAEAE;">
-          <button id="case-sensitive-toggle" style="position:absolute; right:8px; top:50%; transform:translateY(-50%); padding:6px 8px; border-radius:6px; border:1px solid transparent; background:#fff; cursor:pointer;">Aa</button>
+          <button id="case-sensitive-toggle">Aa</button>
         </div>
       </div>
 
@@ -142,6 +149,7 @@
 <svg style="display:none;">
   <symbol id="lock" viewBox="0 0 24 24"><path d="M5 11V7a7 7 0 0114 0v4" stroke="#2D2D2D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><rect x="3" y="11" width="18" height="10" rx="2" stroke="#2D2D2D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></symbol>
   <symbol id="unlock" viewBox="0 0 24 24"><path d="M7 11V7a5 5 0 019.9-1" stroke="#2D2D2D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><rect x="3" y="11" width="18" height="10" rx="2" stroke="#2D2D2D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></symbol>
+  <symbol id="reset-icon" viewBox="0 0 16 15"><path d="M3.7 1.5L1 3.75M1 3.75L3.7 6.375M1 3.75H9.94C12.62 3.75 14.89 5.8575 14.996 8.4375C15.1067 11.1637 12.77 13.5 9.942 13.5H3.33" stroke="#5F5F5F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
 </svg>
 
 <script>
@@ -182,6 +190,8 @@
   const formatterTokens = document.querySelectorAll('.token');
   const clearFormatRuleBtn = document.getElementById('clear-format-rule');
   const applyFormatRuleBtn = document.getElementById('apply-format-rule');
+  const loadingOverlay = document.getElementById('loading-overlay');
+  const loadingMessage = document.getElementById('loading-message');
 
   // Helpers
   function setMode(mode) {
@@ -193,10 +203,12 @@
     const isFinder = mode === 'finder';
     finderContainer.classList.toggle('hidden', !isFinder);
     textListContainer.classList.toggle('hidden', isFinder);
+    // --> LINHA ADICIONADA: Esconde a mensagem de estado vazio quando estiver no Finder.
+    if (isFinder) emptyState.classList.add('hidden');
+    
     footer.classList.remove('hidden');
     finderActions.classList.toggle('hidden', !isFinder);
     applyBtn.classList.toggle('hidden', isFinder);
-
     if (!isFinder && lastReceivedData) renderContent(lastReceivedData);
     updateApplyButtonState();
   }
@@ -227,10 +239,7 @@
   function renderTextView(textData) {
     const frameIds = Object.keys(textData || {});
     if (frameIds.length === 0) {
-      if (currentMode !== 'finder') {
-        emptyState.querySelector('p:first-child').textContent = 'No text selected';
-        emptyState.classList.remove('hidden');
-      }
+      showEmptyState('No text selected');
       textListContainer.classList.add('hidden');
       footer.classList.add('hidden');
       return;
@@ -263,9 +272,9 @@
 
         if (lockedNodeId && lockedNodeId !== node.nodeId) input.disabled = true;
 
-        const reset = document.createElement('img');
+        const reset = document.createElement('div'); // Usamos um div como container
         reset.className = 'reset-icon' + (input.value !== input.dataset.originalText ? ' visible' : '');
-        reset.src = 'data:image/svg+xml;utf8,<svg width="16" height="15" viewBox="0 0 16 15" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3.7 1.5L1 3.75M1 3.75L3.7 6.375M1 3.75H9.94C12.62 3.75 14.89 5.8575 14.996 8.4375C15.1067 11.1637 12.77 13.5 9.942 13.5H3.33" stroke="%235F5F5F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+        reset.innerHTML = `<svg width="16" height="15"><use href="#reset-icon"/></svg>`;
 
         wrapper.appendChild(lock);
         wrapper.appendChild(input);
@@ -275,13 +284,11 @@
       textListContainer.appendChild(group);
     }
   }
+  
 
   function renderFrameView(frameData) {
     if (!frameData || frameData.length === 0) {
-      if (currentMode !== 'finder') { // <-- evita mostrar no Finder
-        emptyState.querySelector('p:first-child').textContent = 'No frames selected';
-        emptyState.classList.remove('hidden');
-      }
+      showEmptyState('No frames selected');
       textListContainer.classList.add('hidden');
       footer.classList.add('hidden');
       return;
@@ -300,13 +307,20 @@
       input.value = frame.name; input.dataset.nodeId = frame.nodeId; input.dataset.originalText = frame.name;
       if (lockedNodeId && lockedNodeId !== frame.nodeId) input.disabled = true;
 
-      const reset = document.createElement('img'); reset.className = 'reset-icon' + (input.value !== input.dataset.originalText ? ' visible' : '');
-      reset.src = 'data:image/svg+xml;utf8,<svg width="16" height="15" viewBox="0 0 16 15" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3.7 1.5L1 3.75M1 3.75L3.7 6.375M1 3.75H9.94C12.62 3.75 14.89 5.8575 14.996 8.4375C15.1067 11.1637 12.77 13.5 9.942 13.5H3.33" stroke="%235F5F5F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+      const reset = document.createElement('div');
+      reset.className = 'reset-icon' + (input.value !== input.dataset.originalText ? ' visible' : '');
+      reset.innerHTML = `<svg width="16" height="15"><use href="#reset-icon"/></svg>`;
 
       wrapper.appendChild(lock); wrapper.appendChild(input); wrapper.appendChild(reset);
       group.appendChild(wrapper);
     }
     textListContainer.appendChild(group);
+  }
+
+  function showEmptyState(message) {
+    if (currentMode === 'finder') return; // Finder nunca mostra empty state
+    emptyState.querySelector('p:first-child').textContent = message;
+    emptyState.classList.remove('hidden');
   }
 
   // Finder helpers
@@ -339,6 +353,21 @@
     }
 
     switch (msg.type) {
+
+      case 'show-loading':
+        loadingMessage.textContent = msg.message || 'Processing...';
+        loadingOverlay.classList.remove('hidden');
+        // Opcional: desabilitar outros botões para evitar cliques
+        replaceAllBtn.disabled = true;
+        replaceSingleBtn.disabled = true;
+        break;
+
+      case 'hide-loading':
+        loadingOverlay.classList.add('hidden');
+        // Reabilita os botões (a função updateFinderButtons já faz isso)
+        updateFinderButtons();
+        break;
+
       case 'selectionChange':
         // preserva lock apenas se o nó ainda existir na nova seleção
         if (lockedNodeId) {

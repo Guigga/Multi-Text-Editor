@@ -1,40 +1,41 @@
-Below are the steps to get your plugin running. You can also find instructions at:
+# Multi Text Editor
 
-  https://www.figma.com/plugin-docs/plugin-quickstart-guide/
+Diga adeus à edição de textos um por um. O Multi Text Editor é a ferramenta definitiva para gerenciar e editar múltiplos textos e nomes de frames de uma só vez no Figma.
 
-This plugin template uses Typescript and NPM, two standard tools in creating JavaScript applications.
+Projetado para designers e equipes que buscam eficiência, este plugin elimina o trabalho repetitivo e libera seu tempo para a criatividade.
 
-First, download Node.js which comes with NPM. This will allow you to install TypeScript and other
-libraries. You can find the download link here:
+## Principais Funcionalidades
 
-  https://nodejs.org/en/download/
+**Edição em Massa de Textos:** Selecione quantas camadas de texto desejar e edite todas em uma interface simples e organizada.
 
-Next, install TypeScript using the command:
+**Renomeação em Massa de Frames:** Altere os nomes de múltiplos frames com a mesma facilidade, mantendo seu projeto sempre organizado.
 
-  npm install -g typescript
+**Buscador Inteligente (Finder):** Encontre textos específicos em sua página com a função de "Localizar e Substituir". Com suporte a `case sensitive` e preview em tempo real, você tem total controle sobre as alterações.
 
-Finally, in the directory of your plugin, get the latest type definitions for the plugin API by running:
+**Regras de Formatação Avançada:** Crie padrões para renomear seus textos em lote. Use tokens como `{current_text}` para manter o texto original, `{1-9}` para numeração sequencial e mais.
 
-  npm install --save-dev @figma/plugin-typings
+**Trava de Conteúdo (Lock):** Defina um texto como "fonte" e aplique seu conteúdo a todas as outras camadas selecionadas com um único clique. Ideal para padronizar botões, labels e outros componentes.
 
-If you are familiar with JavaScript, TypeScript will look very familiar. In fact, valid JavaScript code
-is already valid Typescript code.
+**Desfazer (Undo):** Fez uma alteração por engano? O botão "Undo" reverte a última ação em massa, seja ela uma substituição ou uma aplicação de mudanças, garantindo que você possa trabalhar com total confiança.
 
-TypeScript adds type annotations to variables. This allows code editors such as Visual Studio Code
-to provide information about the Figma API while you are writing code, as well as help catch bugs
-you previously didn't notice.
+## Como Usar
 
-For more information, visit https://www.typescriptlang.org/
+**Selecione:** Selecione as camadas de Texto ou Frames que deseja alterar. Segure Ctrl+Shift para selecionar as camadas com precisão.
+**Execute:** Abra o plugin (`Plugins > Multi Text Editor`).
+**Edite:** Use as abas "Texts", "Frames" ou "Finder" para fazer suas alterações.
 
-Using TypeScript requires a compiler to convert TypeScript (code.ts) into JavaScript (code.js)
-for the browser to run.
+4.  **Aplique:** Clique em **Apply →** e veja a mágica acontecer em todas as suas camadas selecionadas!
 
-We recommend writing TypeScript code using Visual Studio code:
+5.  **Imagens:** 
+https://drive.google.com/file/d/1xaUd6yAx5y-cfbQy_U-WuWnHQ3t7uQA2/view?usp=drive_link
+https://drive.google.com/file/d/1aMZ-dSwy2FpJaxM5aXx5tD1BPw5t_EdQ/view?usp=drive_link
+https://drive.google.com/file/d/1l960uwxCL-onPfp3LtRNgCaR1--z4UQX/view?usp=drive_link
 
-1. Download Visual Studio Code if you haven't already: https://code.visualstudio.com/.
-2. Open this directory in Visual Studio Code.
-3. Compile TypeScript to JavaScript: Run the "Terminal > Run Build Task..." menu item,
-    then select "npm: watch". You will have to do this again every time
-    you reopen Visual Studio Code.
 
-That's it! Visual Studio Code will regenerate the JavaScript file every time you save.
+## Feedback e Contato
+
+Encontrou um bug ou tem uma sugestão para melhorar o plugin? Por favor, deixe um comentário na página da Comunidade Figma do plugin! Seu feedback é muito valioso.
+
+---
+
+Criado por **Guigga**

@@ -55,34 +55,28 @@ function findTopLevelFrame(node: BaseNode): FrameNode | null {
 // Safe font loader: tenta carregar font direto; se falhar, carrega por ranges
 async function safeLoadFontForTextNode(node: TextNode) {
   try {
-    // node.fontName pode ser FontName ou "MIXED"
     if ((node.fontName as any) === figma.mixed) {
-      // carrega por ranges únicos
       const len = node.characters.length;
-      const fonts = new Map<string, FontName>();
+      const loaded = new Set<string>();
+      let lastFontKey = '';
       for (let i = 0; i < len; i++) {
         try {
           const f = node.getRangeFontName(i, i + 1) as FontName;
           const key = `${f.family}-${f.style}`;
-          if (!fonts.has(key)) {
-            fonts.set(key, f);
-            await figma.loadFontAsync(f);
+          if (key !== lastFontKey) {
+            lastFontKey = key;
+            if (!loaded.has(key)) {
+              loaded.add(key);
+              await figma.loadFontAsync(f);
+            }
           }
-        } catch (e) {
-          // ignorar pequenas falhas de index
-        }
+        } catch {}
       }
     } else {
       await figma.loadFontAsync(node.fontName as FontName);
     }
   } catch (err) {
-    // fallback: tenta carregar como FontName (algumas vezes a propriedade vem diferente)
-    try {
-      await figma.loadFontAsync(node.fontName as FontName);
-    } catch (e) {
-      // Não podemos fazer mais. Deixa o erro invisível para o usuário, mas evita crash.
-      console.warn('safeLoadFontForTextNode: não conseguiu carregar fonte', e);
-    }
+    console.warn('safeLoadFontForTextNode: não conseguiu carregar fonte', err);
   }
 }
 
@@ -113,9 +107,6 @@ function processSelection() {
   figma.ui.postMessage({ type: 'selectionChange', textData: organizedTextNodes, frameData });
 }
 
-// Inicial
-processSelection();
-// Atualiza quando seleção muda
 figma.on('selectionchange', processSelection);
 
 // Navegação entre resultados encontrados
@@ -168,8 +159,8 @@ figma.ui.onmessage = async (msg) => {
       }
 
       const escaped = escapeForRegex(query);
-      const flags = msg.isCaseSensitive ? 'g' : 'gi';
-      const regex = new RegExp(escaped, flags);
+      const testFlags = msg.isCaseSensitive ? '' : 'i';
+      const regex = new RegExp(escaped, testFlags);
 
       foundNodes = figma.currentPage.findAll(n => {
         if (n.type !== 'TEXT') return false;
@@ -210,7 +201,19 @@ figma.ui.onmessage = async (msg) => {
       }
 
       await safeLoadFontForTextNode(node);
-      const newText = originalText.replace(regex, msg.replaceText || '');
+      let occurrenceIndex = originalText.search(regex);
+      if (msg.currentMatchOffset != null) {
+        // Se a UI enviar o offset exato
+        occurrenceIndex = msg.currentMatchOffset;
+      }
+
+      let newText = originalText;
+      if (occurrenceIndex >= 0) {
+        newText = 
+          originalText.slice(0, occurrenceIndex) +
+          (msg.replaceText || '') +
+          originalText.slice(occurrenceIndex + (msg.findText || '').length);
+      }
 
       // registra undo
       lastChangeSet = [{ nodeId: node.id, originalCharacters: originalText, type: 'TEXT' }];
@@ -245,26 +248,32 @@ figma.ui.onmessage = async (msg) => {
         return;
       }
 
-      const changesToUndo: ChangeLog[] = [];
-      // apply in parallel but load fonts per node
-      for (const node of matches) {
-        const originalText = node.characters;
-        const newText = originalText.replace(regex, msg.replaceText || '');
-        changesToUndo.push({ nodeId: node.id, originalCharacters: originalText, type: 'TEXT' });
+      figma.ui.postMessage({ type: 'show-loading', message: `Replacing ${matches.length} items...` });
 
-        await safeLoadFontForTextNode(node);
-        node.characters = newText;
+          try {
+              const changesToUndo: ChangeLog[] = [];
+              for (const node of matches) {
+                  const originalText = node.characters;
+                  const newText = originalText.replace(regex, msg.replaceText || '');
+                  changesToUndo.push({ nodeId: node.id, originalCharacters: originalText, type: 'TEXT' });
+
+                  await safeLoadFontForTextNode(node);
+                  node.characters = newText;
+              }
+
+              lastChangeSet = changesToUndo;
+              foundNodes = [];
+              currentIndex = -1;
+              figma.ui.postMessage({ type: 'replace-success', count: changesToUndo.length, allReplaced: true });
+          } catch (err) {
+              console.error('Error during replace-all:', err);
+              figma.ui.postMessage({ type: 'plugin-error', message: String(err) });
+          } finally {
+              // --> ADICIONADO: Garante que o loading seja escondido, mesmo se ocorrer um erro.
+              figma.ui.postMessage({ type: 'hide-loading' });
+          }
+          return;
       }
-
-      lastChangeSet = changesToUndo;
-
-      // limpa busca para evitar inconsistências
-      foundNodes = [];
-      currentIndex = -1;
-
-      figma.ui.postMessage({ type: 'replace-success', count: changesToUndo.length, allReplaced: true });
-      return;
-    }
 
     if (msg.type === 'apply-changes') {
       // msg.data = [ { nodeId, newText } ]
@@ -276,6 +285,7 @@ figma.ui.onmessage = async (msg) => {
       // primeiro, coleto os estados originais (para undo)
       for (const change of data) {
         const node = await figma.getNodeByIdAsync(change.nodeId);
+        if (!node || node.type !== 'TEXT') continue;
         if (node && node.type === 'TEXT') {
           changes.push({ nodeId: node.id, originalCharacters: (node as TextNode).characters, type: 'TEXT' });
         }

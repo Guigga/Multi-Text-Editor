@@ -1,46 +1,45 @@
 # Multi Text Editor
 
-Diga adeus à edição de textos um por um. O Multi Text Editor é a ferramenta definitiva para gerenciar e editar múltiplos textos e nomes de frames de uma só vez no Figma.
+Say goodbye to one-by-one text edits. Multi Text Editor is the ultimate tool for managing and editing multiple text layers and frame names at once in Figma.
 
-Projetado para designers e equipes que buscam eficiência, este plugin elimina o trabalho repetitivo e libera seu tempo para a criatividade.
+Designed for designers and teams who value efficiency, this plugin eliminates repetitive work and frees up your time for creativity.
 
-## Principais Funcionalidades
+## Key Features
 
-**Edição em Massa de Textos:** Selecione quantas camadas de texto desejar e edite todas em uma interface simples e organizada.
+**Bulk Text Editing:** Select as many text layers as you want and edit them all in a single, organized interface.
 
-**Renomeação em Massa de Frames:** Altere os nomes de múltiplos frames com a mesma facilidade, mantendo seu projeto sempre organizado.
+**Bulk Frame Renaming:** Change the names of multiple frames with the same ease, keeping your project consistently organized.
 
-**Buscador Inteligente (Finder):** Encontre textos específicos em sua página com a função de "Localizar e Substituir". Com suporte a `case sensitive` e preview em tempo real, você tem total controle sobre as alterações.
+**Smart Finder:** Find specific text across your page with the "Find and Replace" function. With support for `case-sensitive` searches and a real-time preview, you have full control over every change.
 
-**Regras de Formatação Avançada:** Crie padrões para renomear seus textos em lote. Use tokens como `{current_text}` para manter o texto original, `{1-9}` para numeração sequencial e mais.
+**Advanced Formatting Rules:** Create patterns to rename your texts in bulk. Use tokens like `{current_text}` to keep the original text, `{1-9}` for sequential numbering, and more.
 
-**Trava de Conteúdo (Lock):** Defina um texto como "fonte" e aplique seu conteúdo a todas as outras camadas selecionadas com um único clique. Ideal para padronizar botões, labels e outros componentes.
+**Source Lock:** Set one text layer as the "source" and apply its content to all other selected layers with a single click. Ideal for standardizing buttons, labels, and other components.
 
-**Desfazer (Undo):** Fez uma alteração por engano? O botão "Undo" reverte a última ação em massa, seja ela uma substituição ou uma aplicação de mudanças, garantindo que você possa trabalhar com total confiança.
+**Undo:** Made a change by mistake? The "Undo" button reverts the last bulk action—whether it was a replacement or an applied change—ensuring you can work with complete confidence.
 
-## Como Usar
+## How to Use
 
-**Selecione:** Selecione as camadas de Texto ou Frames que deseja alterar. Segure Ctrl+Shift para selecionar as camadas com precisão.
-**Execute:** Abra o plugin (`Plugins > Multi Text Editor`).
-**Edite:** Use as abas "Texts", "Frames" ou "Finder" para fazer suas alterações.
+1.  **Select:** Choose the Text or Frame layers you want to change. (Tip: Hold `Ctrl+Shift` for precise layer selection).
+2.  **Run:** Open the plugin (`Plugins > Multi Text Editor`).
+3.  **Edit:** Use the "Texts," "Frames," or "Finder" tabs to make your changes.
+4.  **Apply:** Click **Apply →** and watch the magic happen across all your selected layers!
 
-4.  **Aplique:** Clique em **Apply →** e veja a mágica acontecer em todas as suas camadas selecionadas!
+## Images
 
-5.  **Imagens:** 
+**Texts Tab:**
+https://raw.githubusercontent.com/Guigga/Multi-Text-Editor/refs/heads/main/assets/MTE%20-%20Texts.png
 
-    Aba "Texts":
-    https://raw.githubusercontent.com/Guigga/Multi-Text-Editor/refs/heads/main/assets/MTE%20-%20Texts.png
+**Frames Tab:**
+https://raw.githubusercontent.com/Guigga/Multi-Text-Editor/refs/heads/main/assets/MTE%20-%20Frames.png
 
-    Aba "Frames":
-    https://raw.githubusercontent.com/Guigga/Multi-Text-Editor/refs/heads/main/assets/MTE%20-%20Frames.png
+**Finder Tab:**
+https://raw.githubusercontent.com/Guigga/Multi-Text-Editor/refs/heads/main/assets/MTE%20-%20Finder.png
 
-    Aba "Finder":
-    https://raw.githubusercontent.com/Guigga/Multi-Text-Editor/refs/heads/main/assets/MTE%20-%20Finder.png
+## Feedback and Contact
 
-## Feedback e Contato
-
-Encontrou um bug ou tem uma sugestão para melhorar o plugin? Por favor, deixe um comentário na página da Comunidade Figma do plugin! Seu feedback é muito valioso.
+Found a bug or have a suggestion to improve the plugin? Please leave a comment on the plugin's Figma Community page! Your feedback is highly valuable.
 
 ---
 
-Criado por **Guigga**
+Created by **Guigga**

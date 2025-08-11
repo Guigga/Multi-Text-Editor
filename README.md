@@ -27,10 +27,15 @@ Projetado para designers e equipes que buscam eficiência, este plugin elimina o
 4.  **Aplique:** Clique em **Apply →** e veja a mágica acontecer em todas as suas camadas selecionadas!
 
 5.  **Imagens:** 
-https://drive.google.com/file/d/1xaUd6yAx5y-cfbQy_U-WuWnHQ3t7uQA2/view?usp=drive_link
-https://drive.google.com/file/d/1aMZ-dSwy2FpJaxM5aXx5tD1BPw5t_EdQ/view?usp=drive_link
-https://drive.google.com/file/d/1l960uwxCL-onPfp3LtRNgCaR1--z4UQX/view?usp=drive_link
 
+    *Aba "Texts" para edição de conteúdo de texto:*
+    ![Aba de Textos](./imagens/MTE - Texts.png)
+
+    *Aba "Frames" para renomear frames:*
+    ![Aba de Frames](./imagens/MTE - Frames.png)
+
+    *Aba "Finder" para localizar e substituir:*
+    ![Aba do Finder](./imagens/MTE - Finder.png)
 
 ## Feedback e Contato
 

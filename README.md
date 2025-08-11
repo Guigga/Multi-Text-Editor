@@ -28,14 +28,14 @@ Projetado para designers e equipes que buscam eficiência, este plugin elimina o
 
 5.  **Imagens:** 
 
-    *Aba "Texts" para edição de conteúdo de texto:*
-    ![Aba de Textos](./imagens/MTE - Texts.png)
+    Aba "Texts":
+    https://raw.githubusercontent.com/Guigga/Multi-Text-Editor/refs/heads/main/assets/MTE%20-%20Texts.png
 
-    *Aba "Frames" para renomear frames:*
-    ![Aba de Frames](./imagens/MTE - Frames.png)
+    Aba "Frames":
+    https://raw.githubusercontent.com/Guigga/Multi-Text-Editor/refs/heads/main/assets/MTE%20-%20Frames.png
 
-    *Aba "Finder" para localizar e substituir:*
-    ![Aba do Finder](./imagens/MTE - Finder.png)
+    Aba "Finder":
+    https://raw.githubusercontent.com/Guigga/Multi-Text-Editor/refs/heads/main/assets/MTE%20-%20Finder.png
 
 ## Feedback e Contato
 
